@@ -127,7 +127,7 @@ const GOOGLE_CLIENT_ID = '663831050904-peah531bm14q24eo07o4ieig3g628pon.apps.goo
 
 function initGoogleSignIn(){
   if(!window.google || !GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.startsWith('YOUR_')) return;
-  google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleCredential });
+  google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleCredential, use_fedcm_for_button: true });
   google.accounts.id.renderButton(document.getElementById('g_id_signin'), {
     theme: document.documentElement.getAttribute('data-theme')==='light' ? 'outline' : 'filled_black',
     size: 'large', width: 316, locale: curLang==='ar' ? 'ar' : 'en'
