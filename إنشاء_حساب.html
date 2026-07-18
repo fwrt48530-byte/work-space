@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>إنشاء حساب</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer onload="initGoogleSignIn()"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#f7f6f3;--bg2:#fff;--txt:#1a1a1a;--border:#e5e4df;--blue:#2563eb;--bl:#eff6ff;--bt:#2563eb}
@@ -25,6 +26,9 @@ html,body{min-height:100vh;font-family:'IBM Plex Sans Arabic',system-ui,sans-ser
 .switch-link a{color:var(--bt);cursor:pointer;text-decoration:underline}
 .err{color:#dc2626;font-size:12.5px;margin-top:4px;display:none}
 .err.show{display:block}
+.divider{display:flex;align-items:center;gap:10px;margin:18px 0 14px;font-size:12px;opacity:.45}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+#g_id_signin{display:flex;justify-content:center}
 </style>
 </head>
 <body>
@@ -53,6 +57,9 @@ html,body{min-height:100vh;font-family:'IBM Plex Sans Arabic',system-ui,sans-ser
 
   <button class="btn-main" onclick="doRegister()" data-i18n="btn.register">إنشاء الحساب</button>
 
+  <div class="divider"><span data-i18n="divider.or">أو</span></div>
+  <div id="g_id_signin"></div>
+
   <div class="switch-link">
     <span data-i18n="switch.haveAccount">لديك حساب بالفعل؟</span> <a onclick="goTo('تسجيل_الدخول.html')" data-i18n="switch.login">تسجيل الدخول</a>
   </div>
@@ -72,7 +79,8 @@ const I18N = {
     'field.email':'البريد الإلكتروني', 'field.password':'كلمة المرور', 'field.password.ph':'6 أحرف على الأقل',
     'field.confirmPassword':'تأكيد كلمة المرور', 'field.confirmPassword.ph':'أعد كتابة كلمة المرور',
     'btn.register':'إنشاء الحساب', 'switch.haveAccount':'لديك حساب بالفعل؟', 'switch.login':'تسجيل الدخول',
-    'err.fillAll':'يرجى تعبئة جميع الحقول', 'err.passwordLen':'كلمة المرور يجب أن تكون 6 أحرف على الأقل', 'err.passwordMismatch':'كلمتا المرور غير متطابقتين'
+    'err.fillAll':'يرجى تعبئة جميع الحقول', 'err.passwordLen':'كلمة المرور يجب أن تكون 6 أحرف على الأقل', 'err.passwordMismatch':'كلمتا المرور غير متطابقتين',
+    'divider.or':'أو'
   },
   en: {
     'title':'Create a new account', 'subtitle':'Start your journey with the workspace',
@@ -80,7 +88,8 @@ const I18N = {
     'field.email':'Email', 'field.password':'Password', 'field.password.ph':'At least 6 characters',
     'field.confirmPassword':'Confirm Password', 'field.confirmPassword.ph':'Re-enter your password',
     'btn.register':'Create Account', 'switch.haveAccount':'Already have an account?', 'switch.login':'Log In',
-    'err.fillAll':'Please fill in all fields', 'err.passwordLen':'Password must be at least 6 characters', 'err.passwordMismatch':'Passwords do not match'
+    'err.fillAll':'Please fill in all fields', 'err.passwordLen':'Password must be at least 6 characters', 'err.passwordMismatch':'Passwords do not match',
+    'divider.or':'or'
   }
 };
 let curLang = localStorage.getItem('app-lang') || 'ar';
@@ -111,6 +120,30 @@ function doRegister(){
   window.parent.postMessage({type:'login-success'}, '*');
 }
 function goTo(page){ window.parent.postMessage({type:'goto', page}, '*'); }
+
+/* ── تسجيل الدخول بجوجل (Google Identity Services) ──
+   ضع معرّف عميل Google OAuth الخاص بك هنا بعد إنشائه من Google Cloud Console */
+const GOOGLE_CLIENT_ID = '663831050904-peah531bm14q24eo07o4ieig3g628pon.apps.googleusercontent.com';
+
+function initGoogleSignIn(){
+  if(!window.google || !GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.startsWith('YOUR_')) return;
+  google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleCredential });
+  google.accounts.id.renderButton(document.getElementById('g_id_signin'), {
+    theme: document.documentElement.getAttribute('data-theme')==='light' ? 'outline' : 'filled_black',
+    size: 'large', width: 316, locale: curLang==='ar' ? 'ar' : 'en'
+  });
+}
+function parseJwt(token){
+  const base64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+  const json = decodeURIComponent(atob(base64).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+  return JSON.parse(json);
+}
+function handleGoogleCredential(response){
+  const p = parseJwt(response.credential);
+  const acc = { name:p.name, email:p.email, picture:p.picture, provider:'google', createdAt:new Date().toISOString() };
+  localStorage.setItem('userAccount', JSON.stringify(acc));
+  window.parent.postMessage({type:'login-success'}, '*');
+}
 </script>
 <script>
 /* أمسك واسحب للتمرير في كل الاتجاهات (بالماوس) — drag-to-scroll */

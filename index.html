@@ -589,7 +589,12 @@ function updateUser(){
   const acc = JSON.parse(localStorage.getItem('userAccount')||'null');
   document.getElementById('uname').textContent = acc ? acc.name||'مستخدم' : t('user.notRegistered');
   document.getElementById('uemail').textContent = acc ? acc.email||'' : t('user.clickToLogin');
-  document.getElementById('uav').textContent = acc ? (acc.name||'م')[0] : '؟';
+  const av = document.getElementById('uav');
+  if(acc && acc.picture){
+    av.innerHTML = '<img src="'+acc.picture+'" style="width:100%;height:100%;border-radius:50%;object-fit:cover">';
+  } else {
+    av.textContent = acc ? (acc.name||'م')[0] : '؟';
+  }
 }
 
 // ── TIMER SYSTEM ──
