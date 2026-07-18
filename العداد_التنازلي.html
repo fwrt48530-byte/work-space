@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>العداد التنازلي</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f7f6f3;--bg2:#fff;--txt:#1a1a1a;--border:#e5e4df;--blue:#2563eb;--bl:#eff6ff;--bt:#2563eb;--green:#16a34a;--gl:#f0fdf4;--gt:#16a34a;--red:#dc2626;--rl:#fef2f2;--rt:#dc2626;--sh:0 1px 3px rgba(0,0,0,.08)}
+[data-theme="dark"]{--bg:#121212;--bg2:#1e1e1e;--txt:#e4e4e7;--border:#27272a;--bl:#1e3a5f;--bt:#60a5fa;--gl:#14532d;--gt:#4ade80;--rl:#450a0a;--rt:#f87171}
+[data-theme="dim"]{--bg:#0f172a;--bg2:#1e293b;--txt:#f8fafc;--border:#334155;--bl:#1e3a5f;--bt:#7dd3fc;--gl:#14532d;--gt:#4ade80;--rl:#450a0a;--rt:#f87171}
+html,body{min-height:100vh;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;background:var(--bg);color:var(--txt)}
+.page-header{padding:20px 24px;display:flex;align-items:center;justify-content:space-between}
+.page-title{font-size:20px;font-weight:700}
+.btn-add{padding:8px 16px;border:none;border-radius:8px;background:var(--blue);color:#fff;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer}
+.btn-add:hover{opacity:.88}
+.events-list{display:flex;flex-direction:column;gap:12px;padding:0 24px 24px}
+.ev-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px 20px;box-shadow:var(--sh);position:relative;overflow:hidden;display:flex;align-items:center;gap:16px}
+.ev-card::before{content:'';position:absolute;bottom:0;right:0;left:0;height:3px;background:var(--blue)}
+.ev-card.past::before{background:var(--red)}
+.ev-card.soon::before{background:#f59e0b}
+.ev-card.today-card::before{background:var(--green)}
+.ev-left{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.ev-del{border:none;background:none;cursor:pointer;font-size:13px;opacity:.3;color:var(--txt);line-height:1}
+.ev-del:hover{opacity:.8;color:#dc2626}
+.ev-icon{font-size:24px}
+.ev-info{flex:1;min-width:0}
+.ev-title{font-size:15px;font-weight:700;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev-date-lbl{font-size:11.5px;opacity:.5}
+.cal-badge{font-size:10px;padding:2px 7px;border-radius:999px;background:var(--bl);color:var(--bt);font-weight:600;display:inline-block;margin-top:4px}
+.countdown-nums{display:flex;gap:10px;align-items:flex-end;flex-shrink:0}
+.cd-unit{text-align:center;min-width:36px}
+.cd-num{font-size:26px;font-weight:700;color:var(--bt);line-height:1;font-variant-numeric:tabular-nums}
+.cd-lbl{font-size:10px;opacity:.45;margin-top:2px}
+.cd-sep{font-size:20px;font-weight:300;opacity:.3;padding-bottom:14px}
+.ev-status{font-size:12px;font-weight:600;padding:5px 12px;border-radius:20px;flex-shrink:0;white-space:nowrap}
+.ev-status.past{background:var(--rl);color:var(--rt)}
+.ev-status.future{background:var(--bl);color:var(--bt)}
+.ev-status.today{background:var(--gl);color:var(--gt)}
+.empty{text-align:center;padding:80px 24px;opacity:.35}
+.empty-icon{font-size:56px;margin-bottom:14px}
+.empty-txt{font-size:15px}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center}
+.overlay.show{display:flex}
+.modal{background:var(--bg2);border-radius:14px;padding:24px;width:420px;max-width:94vw;box-shadow:0 16px 48px rgba(0,0,0,.25);animation:pop .2s ease}
+@keyframes pop{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{border:none;background:none;font-size:18px;cursor:pointer;opacity:.5;color:var(--txt)}
+.fl{margin-bottom:12px}
+.fl label{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px}
+.fi{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--txt);font-family:inherit;font-size:13.5px;outline:none;direction:rtl}
+.fi:focus{border-color:var(--blue)}
+.icon-section{margin-bottom:12px}
+.icon-section label{display:block;font-size:12.5px;font-weight:600;margin-bottom:8px}
+.icon-row{display:flex;gap:10px;align-items:flex-start}
+.icon-custom-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0}
+.icon-custom{width:52px;height:52px;border:2px dashed var(--border);border-radius:10px;background:var(--bg);color:var(--txt);font-size:26px;text-align:center;outline:none;cursor:text;display:flex;align-items:center;justify-content:center;font-family:inherit;padding:0;transition:border-color .2s}
+.icon-custom:focus{border-color:var(--blue);border-style:solid}
+.icon-custom-hint{font-size:10px;opacity:.4;white-space:nowrap}
+.icon-divider{width:1px;background:var(--border);align-self:stretch;margin:0 2px;flex-shrink:0}
+.emoji-grid{display:flex;flex-wrap:wrap;gap:5px;flex:1}
+.emoji-btn{font-size:20px;padding:5px;border:2px solid var(--border);border-radius:8px;cursor:pointer;background:transparent;transition:border-color .15s}
+.emoji-btn.sel{border-color:var(--blue);background:var(--bl)}
+.emoji-btn:hover{border-color:var(--blue)}
+.add-cal-row{display:flex;align-items:center;gap:8px;font-size:13px;margin-top:6px;padding:10px;background:var(--bg);border-radius:8px}
+.add-cal-row input[type=checkbox]{accent-color:var(--blue);width:16px;height:16px}
+.modal-actions{display:flex;gap:8px;margin-top:16px}
+.btn-p{flex:1;padding:10px;border:none;border-radius:9px;background:var(--blue);color:#fff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.btn-sec{padding:10px 14px;border:1px solid var(--border);border-radius:9px;background:transparent;color:var(--txt);font-family:inherit;font-size:14px;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="page-header">
+  <div class="page-title">⏱️ <span data-i18n="page.title">العداد التنازلي</span></div>
+  <button class="btn-add" onclick="openModal()">+ <span data-i18n="btn.newEvent">حدث جديد</span></button>
+</div>
+
+<div class="events-list" id="events-list"></div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" data-i18n="modal.newEvent">حدث جديد</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="fl"><label data-i18n="field.name">اسم الحدث *</label><input class="fi" id="ev-name" placeholder="مثال: الاختبار النهائي" data-i18n-ph="field.name.ph" oninput="liveSaveEvent()"></div>
+    <div class="fl"><label data-i18n="field.date">التاريخ *</label><input class="fi" type="date" id="ev-date" onchange="liveSaveEvent()"></div>
+
+    <div class="icon-section">
+      <label data-i18n="field.icon">الأيقونة</label>
+      <div class="icon-row">
+        <div class="icon-custom-wrap">
+          <input class="icon-custom" id="icon-custom" maxlength="2" placeholder="😊" oninput="onCustomIcon(this)">
+</div>
+        <div class="icon-divider"></div>
+        <div class="emoji-grid" id="emoji-grid"></div>
+      </div>
+    </div>
+
+    <div class="add-cal-row">
+      <input type="checkbox" id="add-to-cal" checked onchange="liveSaveEvent()">
+      <label for="add-to-cal" data-i18n="field.autoAddCal">إضافة الحدث إلى التقويم تلقائياً</label>
+    </div>
+    <div id="ev-error" style="color:#dc2626;font-size:12.5px;padding:4px 0;display:none;text-align:center;margin-bottom:4px;font-weight:600"></div>
+    <div class="modal-actions">
+      <button class="btn-p" onclick="closeModal()" data-i18n="btn.done">تم ✓</button>
+      <button class="btn-sec" onclick="closeModal()" data-i18n="btn.close">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  function applyTheme(t){
+    document.documentElement.setAttribute('data-theme', t || localStorage.getItem('app-theme') || 'light');
+  }
+  applyTheme();
+  window.addEventListener('message', function(e){
+    if(e.data && e.data.type === 'change-theme') applyTheme(e.data.theme);
+    if(e.data && e.data.type === 'change-lang') applyLang(e.data.lang);
+  });
+
+  // ── اللغة ──
+  var I18N = {
+    ar: {
+      'page.title':'العداد التنازلي', 'btn.newEvent':'حدث جديد', 'modal.newEvent':'حدث جديد',
+      'field.name':'اسم الحدث *', 'field.name.ph':'مثال: الاختبار النهائي', 'field.date':'التاريخ *', 'field.icon':'الأيقونة',
+      'field.autoAddCal':'إضافة الحدث إلى التقويم تلقائياً', 'btn.done':'تم ✓', 'btn.close':'إغلاق',
+      'empty.noEvents':'لا توجد أحداث', 'empty.addFirst':'أضف أول حدث تنازلي!',
+      'unit.today':'اليوم', 'unit.dayAgo':'يوم مضى', 'unit.day':'يوم', 'unit.hour':'ساعة', 'unit.minute':'دقيقة', 'unit.second':'ثانية',
+      'status.today':'🎉 اليوم!', 'status.past':'مضى', 'status.remaining':'متبقي', 'status.day':'يوم', 'badge.inCalendar':'📅 في التقويم',
+      'err.enterName':'⚠️ أدخل اسم الحدث', 'err.enterDate':'⚠️ أدخل تاريخ الحدث'
+    },
+    en: {
+      'page.title':'Countdown', 'btn.newEvent':'New Event', 'modal.newEvent':'New Event',
+      'field.name':'Event Name *', 'field.name.ph':'e.g. Final Exam', 'field.date':'Date *', 'field.icon':'Icon',
+      'field.autoAddCal':'Automatically add this event to the calendar', 'btn.done':'Done ✓', 'btn.close':'Close',
+      'empty.noEvents':'No events', 'empty.addFirst':'Add your first countdown event!',
+      'unit.today':'Today', 'unit.dayAgo':'days ago', 'unit.day':'days', 'unit.hour':'hours', 'unit.minute':'min', 'unit.second':'sec',
+      'status.today':'🎉 Today!', 'status.past':'passed', 'status.remaining':'remaining', 'status.day':'days', 'badge.inCalendar':'📅 In calendar',
+      'err.enterName':'⚠️ Enter the event name', 'err.enterDate':'⚠️ Enter the event date'
+    }
+  };
+  var curLang = localStorage.getItem('app-lang') || 'ar';
+  function t(key){ return (I18N[curLang] && I18N[curLang][key]) || key; }
+  function applyLang(l){
+    curLang = l;
+    document.documentElement.setAttribute('lang', l==='ar'?'ar':'en');
+    document.documentElement.setAttribute('dir', l==='ar'?'rtl':'ltr');
+    var i18nEls = document.querySelectorAll('[data-i18n]');
+    for(var i=0;i<i18nEls.length;i++) i18nEls[i].textContent = t(i18nEls[i].getAttribute('data-i18n'));
+    var phEls = document.querySelectorAll('[data-i18n-ph]');
+    for(var i=0;i<phEls.length;i++) phEls[i].placeholder = t(phEls[i].getAttribute('data-i18n-ph'));
+    render();
+  }
+
+  var STORAGE_KEY = 'countdown-events';
+  var QUICK_ICONS = ['🎯','📅','🎉','📝','🏆','💼','🎓','❤️','🚀','⭐','🎮','🏃','💡','🔔','🌟'];
+  var selIcon = '🎯';
+  var curEvId = null, curCalId = null;
+
+  function getEvList(){
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch(e){ return []; }
+  }
+  
+  // حماية التخزين المحلي لتجنب توقف السكريبت
+  function saveEvList(arr){ 
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); 
+    } catch(e) {
+      console.error('تعذر الحفظ في الذاكرة:', e);
+    }
+  }
+  
+  function todayStr(){ return new Date().toISOString().split('T')[0]; }
+  function pad(n){ return n < 10 ? '0'+n : ''+n; }
+  function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function getDiff(dateStr){
+    var target = new Date(dateStr+'T00:00:00');
+    var now = new Date();
+    var todayMidnight = new Date(todayStr()+'T00:00:00');
+    var daysDiff = Math.round((target - todayMidnight) / (1000*60*60*24));
+    var msLeft = target - now;
+    var totalSec = Math.floor(Math.abs(msLeft)/1000);
+    return {
+      days: Math.abs(daysDiff),
+      hours: Math.floor((totalSec % 86400) / 3600),
+      mins: Math.floor((totalSec % 3600) / 60),
+      secs: totalSec % 60,
+      negative: msLeft < 0
+    };
+  }
+
+  function render(){
+    // حماية دالة الترتيب من التواريخ المفقودة
+    var evList = getEvList().sort(function(a,b){ 
+      var d1 = a.date || '';
+      var d2 = b.date || '';
+      return d1.localeCompare(d2); 
+    });
+    
+    var container = document.getElementById('events-list');
+    if(!evList.length){
+      container.innerHTML = '<div class="empty"><div class="empty-icon">⏱️</div><div class="empty-txt">'+t('empty.noEvents')+'<br>'+t('empty.addFirst')+'</div></div>';
+      return;
+    }
+    var today = todayStr();
+    var html = '';
+    for(var i=0;i<evList.length;i++){
+      var ev = evList[i];
+      if(!ev.date) continue; // تخطي الحدث التالف لتجنب تعطل العرض
+
+      var diff = getDiff(ev.date);
+      var isPast = ev.date < today;
+      var isToday = ev.date === today;
+      var cls = isPast ? 'past' : (diff.days <= 7 ? 'soon' : '');
+      if(isToday) cls = 'today-card';
+
+      var countdownHTML = '';
+      if(isToday){
+        countdownHTML = '<div class="countdown-nums"><div class="cd-unit"><div class="cd-num">🎉</div><div class="cd-lbl">'+t('unit.today')+'</div></div></div>';
+      } else if(isPast){
+        countdownHTML = '<div class="countdown-nums"><div class="cd-unit"><div class="cd-num">'+Math.abs(diff.days)+'</div><div class="cd-lbl">'+t('unit.dayAgo')+'</div></div></div>';
+      } else {
+        countdownHTML = '<div class="countdown-nums">'
+          +'<div class="cd-unit"><div class="cd-num">'+diff.days+'</div><div class="cd-lbl">'+t('unit.day')+'</div></div>'
+          +'<div class="cd-sep">:</div>'
+          +'<div class="cd-unit"><div class="cd-num">'+pad(diff.hours)+'</div><div class="cd-lbl">'+t('unit.hour')+'</div></div>'
+          +'<div class="cd-sep">:</div>'
+          +'<div class="cd-unit"><div class="cd-num">'+pad(diff.mins)+'</div><div class="cd-lbl">'+t('unit.minute')+'</div></div>'
+          +'<div class="cd-sep">:</div>'
+          +'<div class="cd-unit"><div class="cd-num">'+pad(diff.secs)+'</div><div class="cd-lbl">'+t('unit.second')+'</div></div>'
+          +'</div>';
+      }
+
+      var statusTxt = isToday ? t('status.today') : isPast ? (t('status.past')+' '+Math.abs(diff.days)+' '+t('status.day')) : (t('status.remaining')+' '+diff.days+' '+t('status.day'));
+      var statusCls = isToday ? 'today' : isPast ? 'past' : 'future';
+      var calBadge = ev.addedToCalendar ? '<div class="cal-badge">'+t('badge.inCalendar')+'</div>' : '';
+
+      html += '<div class="ev-card '+cls+'">'
+        +'<div class="ev-left">'
+        +'<button class="ev-del" onclick="deleteEv(\''+ev.id+'\')">✕</button>'
+        +'<div class="ev-icon">'+(ev.icon||'🎯')+'</div>'
+        +'</div>'
+        +'<div class="ev-info">'
+        +'<div class="ev-title">'+esc(ev.name)+'</div>'
+        +'<div class="ev-date-lbl">📅 '+ev.date+'</div>'
+        +calBadge
+        +'</div>'
+        +countdownHTML
+        +'<div class="ev-status '+statusCls+'">'+statusTxt+'</div>'
+        +'</div>';
+    }
+    container.innerHTML = html;
+  }
+
+  function openModal(){
+    curEvId = null; curCalId = null;
+    document.getElementById('ev-name').value = '';
+    document.getElementById('ev-date').value = todayStr();
+    document.getElementById('add-to-cal').checked = true;
+    document.getElementById('icon-custom').value = '';
+    selIcon = '🎯';
+    document.getElementById('ev-error').style.display = 'none';
+    var grid = document.getElementById('emoji-grid');
+    var gHtml = '';
+    for(var i=0;i<QUICK_ICONS.length;i++){
+      gHtml += '<button type="button" class="emoji-btn'+(i===0?' sel':'')+'" onclick="pickQuick('+i+',this)">'+QUICK_ICONS[i]+'</button>';
+    }
+    grid.innerHTML = gHtml;
+    document.getElementById('overlay').classList.add('show');
+    setTimeout(function(){ document.getElementById('ev-name').focus(); }, 50);
+  }
+
+  function pickQuick(idx, btn){
+    selIcon = QUICK_ICONS[idx];
+    var btns = document.querySelectorAll('.emoji-btn');
+    for(var i=0;i<btns.length;i++) btns[i].classList.remove('sel');
+    btn.classList.add('sel');
+    document.getElementById('icon-custom').value = '';
+    liveSaveEvent();
+  }
+
+  function onCustomIcon(input){
+    var val = input.value.trim();
+    var btns = document.querySelectorAll('.emoji-btn');
+    if(val){
+      selIcon = val;
+      for(var i=0;i<btns.length;i++) btns[i].classList.remove('sel');
+    } else {
+      selIcon = '🎯';
+      if(btns[0]) btns[0].classList.add('sel');
+    }
+    liveSaveEvent();
+  }
+
+  function closeModal(){
+    document.getElementById('overlay').classList.remove('show');
+  }
+
+  // حفظ فوري مع كل تغيير: أول حرف في الاسم ينشئ الحدث فوراً حتى لا يُفقد عند الانتقال لصفحة أخرى
+  function liveSaveEvent(){
+    var name = document.getElementById('ev-name').value.trim();
+    var date = document.getElementById('ev-date').value;
+    var addToCal = document.getElementById('add-to-cal').checked;
+    if(!name) return;
+    var evList = getEvList();
+    var ev;
+    if(curEvId){
+      for(var i=0;i<evList.length;i++){
+        if(evList[i].id===curEvId){ ev=evList[i]; ev.name=name; ev.date=date; ev.icon=selIcon||'🎯'; ev.addedToCalendar=addToCal; break; }
+      }
+    } else {
+      ev = { id:'ev'+Date.now(), name:name, date:date, icon:selIcon||'🎯', createdAt:new Date().toISOString(), addedToCalendar:addToCal, calendarEventId:null };
+      evList.push(ev);
+      curEvId = ev.id;
+    }
+    syncCalendarLink(name, date, addToCal);
+    if(ev) ev.calendarEventId = curCalId;
+    saveEvList(evList);
+    render();
+  }
+
+  function syncCalendarLink(name, date, addToCal){
+    try {
+      var calEvList = JSON.parse(localStorage.getItem('calendar-events')||'[]');
+      if(addToCal && name && date){
+        var found = false;
+        if(curCalId){
+          for(var i=0;i<calEvList.length;i++){
+            if(calEvList[i].id===curCalId){ calEvList[i].title=(selIcon||'🎯')+' '+name; calEvList[i].date=date; found=true; break; }
+          }
+        }
+        if(!found){
+          var newCal = { id:'cd'+Date.now(), title:(selIcon||'🎯')+' '+name, date:date, time:'', note:'من العداد التنازلي', repeat:'none', createdAt:new Date().toISOString() };
+          calEvList.push(newCal);
+          curCalId = newCal.id;
+        }
+      } else if(curCalId){
+        calEvList = calEvList.filter(function(c){ return c.id !== curCalId; });
+        curCalId = null;
+      }
+      localStorage.setItem('calendar-events', JSON.stringify(calEvList));
+    } catch(e){}
+  }
+
+  // حذف الحدث التنازلي: يُحذف أيضاً من التقويم إلا إذا كان تاريخه قد مضى (مكتمل) — يبقى كسجل تاريخي
+  function deleteEv(id){
+    var evList = getEvList();
+    var ev = null;
+    for(var i=0;i<evList.length;i++){ if(evList[i].id===id){ ev=evList[i]; break; } }
+    if(ev && ev.calendarEventId){
+      var isPast = ev.date && ev.date < todayStr();
+      if(!isPast){
+        try{
+          var calEvList = JSON.parse(localStorage.getItem('calendar-events')||'[]');
+          calEvList = calEvList.filter(function(c){ return c.id !== ev.calendarEventId; });
+          localStorage.setItem('calendar-events', JSON.stringify(calEvList));
+        }catch(e){}
+      }
+    }
+    saveEvList(evList.filter(function(e){ return e.id !== id; }));
+    render();
+  }
+
+  window.openModal = openModal;
+  window.closeModal = closeModal;
+  window.liveSaveEvent = liveSaveEvent;
+  window.deleteEv = deleteEv;
+  window.pickQuick = pickQuick;
+  window.onCustomIcon = onCustomIcon;
+
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeModal(); });
+
+  applyLang(curLang);
+  setInterval(render, 1000);
+})();
+</script>
+<script>
+/* إغلاق النافذة المنبثقة بالضغط خارجها (على الخلفية) بدل زر ✕ */
+(function(){
+  function bind(ov){
+    var down=false;
+    ov.addEventListener('pointerdown',function(e){ down=(e.target===ov); });
+    ov.addEventListener('click',function(e){
+      if(e.target===ov && down){
+        var btn=ov.querySelector('.modal-close, .ch-close');
+        if(btn){ btn.click(); } else { ov.classList.remove('show'); }
+      }
+    });
+  }
+  document.querySelectorAll('.overlay, #checkin-overlay').forEach(bind);
+})();
+</script>
+<script>
+/* أمسك واسحب للتمرير في كل الاتجاهات (بالماوس) — drag-to-scroll */
+(function(){
+  var down=false, moved=false, sx=0, sy=0, elX=null, elY=null, baseL=0, baseT=0;
+  var NODRAG='a,button,input,textarea,select,label,option,[contenteditable="true"],[draggable="true"],.no-drag';
+  function scrollable(el, axis){
+    while(el && el.nodeType===1 && el!==document.body && el!==document.documentElement){
+      var s=getComputedStyle(el), o=(axis==='y'?s.overflowY:s.overflowX);
+      var can=(o==='auto'||o==='scroll'||o==='overlay');
+      var big=(axis==='y'? el.scrollHeight>el.clientHeight+1 : el.scrollWidth>el.clientWidth+1);
+      if(can && big) return el;
+      el=el.parentElement;
+    }
+    return axis==='y' ? (document.scrollingElement||document.documentElement) : null;
+  }
+  addEventListener('pointerdown',function(e){
+    if(e.pointerType && e.pointerType!=='mouse') return;   /* اللمس يمرّر بشكل طبيعي */
+    if(e.button!==0) return;
+    if(e.target.closest && e.target.closest(NODRAG)) return;
+    if(getComputedStyle(e.target).cursor==='text') return;
+    down=true; moved=false; sx=e.clientX; sy=e.clientY;
+    elY=scrollable(e.target,'y'); elX=scrollable(e.target,'x');
+    baseT=elY?elY.scrollTop:0; baseL=elX?elX.scrollLeft:0;
+  },true);
+  addEventListener('pointermove',function(e){
+    if(!down) return;
+    var dx=e.clientX-sx, dy=e.clientY-sy;
+    if(!moved){
+      if(Math.abs(dx)<5 && Math.abs(dy)<5) return;
+      moved=true;
+      document.body.style.cursor='grabbing';
+      document.body.style.userSelect='none';
+    }
+    if(e.cancelable) e.preventDefault();
+    if(elY) elY.scrollTop=baseT-dy;
+    if(elX) elX.scrollLeft=baseL-dx;
+  },{passive:false,capture:true});
+  function end(){
+    if(!down) return;
+    down=false;
+    document.body.style.cursor='';
+    document.body.style.userSelect='';
+    if(moved){                       /* امنع النقرة الناتجة عن السحب */
+      var sup=function(ev){ ev.stopPropagation(); ev.preventDefault(); removeEventListener('click',sup,true); };
+      addEventListener('click',sup,true);
+      setTimeout(function(){ removeEventListener('click',sup,true); },0);
+    }
+  }
+  addEventListener('pointerup',end,true);
+  addEventListener('pointercancel',end,true);
+})();
+</script>
+<script>
+/* حجم الخط الموحّد (font-scale) — يُطبّق إعداد "حجم الخط" من الإعدادات على كل الصفحات.
+   الصفحة العليا فقط تُطبّق zoom؛ الصفحة داخل iframe يُصغّرها تكبير القوقعة تلقائياً. */
+(function(){
+  var M={small:0.85, normal:1, large:1.15};
+  function cur(){ var v=localStorage.getItem('font-scale'); return M[v]?v:'normal'; }
+  function apply(){
+    if(window.top!==window.self) return;            /* مؤطّرة: القوقعة تتكفّل بالتصغير */
+    var s=M[cur()]||1, de=document.documentElement;
+    de.style.zoom=s;
+    /* تعويض الارتفاع حتى لا يظهر فراغ أسفل الشاشة (zoom يتعارض مع 100vh) */
+    de.style.height = s===1 ? '' : (100/s)+'vh';
+    if(document.body) document.body.style.minHeight = s===1 ? '' : (100/s)+'vh';
+  }
+  if(document.body) apply(); else document.addEventListener('DOMContentLoaded',apply);
+  window.addEventListener('storage', function(e){ if(e.key==='font-scale') apply(); });
+})();
+</script>
+</body>
+</html>

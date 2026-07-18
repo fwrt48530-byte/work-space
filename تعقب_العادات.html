@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تعقب العادات</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f7f6f3;--bg2:#fff;--txt:#1a1a1a;--border:#e5e4df;--blue:#2563eb;--bl:#eff6ff;--bt:#2563eb;--green:#16a34a;--gl:#f0fdf4;--gt:#16a34a;--orange:#ea580c;--ol:#fff7ed;--ot:#ea580c;--r:10px;--sh:0 1px 3px rgba(0,0,0,.08)}
+[data-theme="dark"]{--bg:#121212;--bg2:#1e1e1e;--txt:#e4e4e7;--border:#27272a;--bl:#1e3a5f;--bt:#60a5fa;--gl:#14532d;--gt:#4ade80;--ol:#431407;--ot:#fb923c}
+[data-theme="dim"]{--bg:#0f172a;--bg2:#1e293b;--txt:#f8fafc;--border:#334155;--bl:#1e3a5f;--bt:#7dd3fc;--gl:#14532d;--gt:#4ade80;--ol:#431407;--ot:#fb923c}
+html,body{min-height:100vh;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;background:var(--bg);color:var(--txt)}
+
+.page-header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.page-title{font-size:20px;font-weight:700}
+.header-btns{display:flex;gap:8px}
+.btn-add{padding:8px 16px;border:none;border-radius:8px;background:var(--blue);color:#fff;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer}
+.btn-add:hover{opacity:.88}
+.btn-clear{padding:7px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--txt);font-family:inherit;font-size:12.5px;cursor:pointer}
+.btn-clear:hover{border-color:#dc2626;color:#dc2626}
+
+/* STATS BAR */
+.stats-bar{display:flex;gap:10px;padding:0 20px 14px;flex-wrap:wrap}
+.stat-chip{padding:8px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);font-size:13px;font-weight:500;display:flex;align-items:center;gap:5px}
+.stat-chip b{font-weight:700;color:var(--bt)}
+
+/* WEEK HEADER */
+.week-header{display:grid;grid-template-columns:1fr repeat(7,40px);gap:6px;padding:0 20px 6px}
+.wh-label{font-size:12px;font-weight:600;opacity:.4}
+.wh-day{font-size:11px;font-weight:600;text-align:center;opacity:.5}
+.wh-day.today-col{color:var(--bt);opacity:1}
+
+/* HABITS LIST */
+.habits-list{display:flex;flex-direction:column;gap:6px;padding:0 20px 24px}
+
+.habit-row{
+  display:grid;grid-template-columns:1fr repeat(7,40px);gap:6px;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r);padding:10px 12px;align-items:center;cursor:grab
+}
+.habit-info-col{cursor:pointer;transition:opacity .12s}
+.habit-info-col:hover{opacity:.75}
+.habit-info{display:flex;align-items:center;gap:10px}
+.habit-icon{font-size:20px}
+.habit-name{font-size:13.5px;font-weight:600}
+.habit-streak{font-size:11px;color:var(--ot);font-weight:600;margin-top:2px}
+.habit-meta{display:flex;align-items:center;gap:6px;margin-top:5px}
+.habit-del-btn{border:none;background:none;cursor:pointer;font-size:11px;opacity:.3;color:#dc2626;padding:0}
+.habit-del-btn:hover{opacity:.9}
+.habit-tap-hint{font-size:10px;opacity:.3}
+
+.habit-check{
+  width:34px;height:34px;border-radius:9px;border:2px solid var(--border);
+  background:transparent;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;font-size:16px;margin:0 auto;transition:all .15s
+}
+.habit-check.done{background:var(--green);border-color:var(--green);color:#fff}
+.habit-check.future{opacity:.3;cursor:default}
+.habit-check:hover:not(.done):not(.future){background:var(--gl);border-color:var(--green)}
+
+/* EMPTY */
+.empty{text-align:center;padding:60px 20px;opacity:.35}
+.empty-icon{font-size:48px;margin-bottom:12px}
+
+/* MODAL BASE */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center}
+.overlay.show{display:flex}
+.modal{background:var(--bg2);border-radius:14px;padding:22px;width:380px;max-width:94vw;box-shadow:0 16px 48px rgba(0,0,0,.25);animation:pop .2s ease}
+@keyframes pop{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{border:none;background:none;font-size:18px;cursor:pointer;opacity:.5;color:var(--txt)}
+.fl{margin-bottom:12px}
+.fl label{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px}
+.fi{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--txt);font-family:inherit;font-size:13.5px;outline:none;direction:rtl}
+.fi:focus{border-color:var(--blue)}
+.emoji-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.emoji-btn{font-size:20px;padding:6px;border:2px solid var(--border);border-radius:8px;cursor:pointer;background:transparent;transition:all .12s}
+.emoji-btn.sel{border-color:var(--blue);background:var(--bl)}
+.modal-actions{display:flex;gap:8px;margin-top:14px}
+.btn-p{flex:1;padding:10px;border:none;border-radius:9px;background:var(--blue);color:#fff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.btn-sec{padding:10px 14px;border:1px solid var(--border);border-radius:9px;background:transparent;color:var(--txt);font-family:inherit;font-size:14px;cursor:pointer}
+
+/* STATS MODAL */
+.stats-modal{width:460px;max-height:90vh;overflow-y:auto}
+.stats-hero{display:flex;align-items:center;gap:14px;margin-bottom:20px;padding:16px;background:var(--bg);border-radius:12px}
+.stats-icon-big{font-size:42px}
+.stats-hero-info{}
+.stats-hero-name{font-size:18px;font-weight:700}
+.stats-hero-sub{font-size:12px;opacity:.5;margin-top:2px}
+
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.stat-box{background:var(--bg);border-radius:10px;padding:14px;text-align:center;border:1px solid var(--border)}
+.stat-box-num{font-size:28px;font-weight:700;color:var(--bt);line-height:1}
+.stat-box-lbl{font-size:11.5px;opacity:.5;margin-top:4px}
+
+/* MONTH CALENDAR */
+.month-cal-title{font-size:13px;font-weight:700;opacity:.6;margin-bottom:8px}
+.month-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:18px}
+.mc-dh{text-align:center;font-size:10px;font-weight:600;opacity:.4;padding:2px}
+.mc-day{width:100%;aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;position:relative}
+.mc-day.done{background:var(--green);color:#fff}
+.mc-day.today-d{outline:2px solid var(--blue)}
+.mc-day.empty-d{opacity:.1}
+.mc-day.other-m{opacity:.2}
+
+/* WEEK BARS */
+.week-bars-title{font-size:13px;font-weight:700;opacity:.6;margin-bottom:10px}
+.week-bars{display:flex;gap:5px;align-items:flex-end;height:60px;margin-bottom:6px}
+.week-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.week-bar-fill{width:100%;border-radius:4px 4px 0 0;background:var(--border);position:relative;overflow:hidden;min-height:4px}
+.week-bar-inner{position:absolute;bottom:0;left:0;right:0;background:var(--blue);border-radius:4px 4px 0 0;transition:height .4s}
+.week-bar-lbl{font-size:9px;opacity:.4;font-weight:600}
+
+/* COMPLETION RING */
+.ring-wrap{display:flex;justify-content:center;margin-bottom:16px}
+.ring-svg{transform:rotate(-90deg)}
+.ring-track{fill:none;stroke:var(--border);stroke-width:12}
+.ring-fill{fill:none;stroke:var(--blue);stroke-width:12;stroke-linecap:round;transition:stroke-dashoffset .6s ease}
+.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring-pct{font-size:28px;font-weight:700;color:var(--bt)}
+.ring-pct-lbl{font-size:11px;opacity:.5}
+
+/* MONTH NAV (in stats modal) */
+.month-cal-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.month-cal-nav .month-cal-title{margin-bottom:0;flex:1;text-align:center}
+.mc-nav-btn{border:1px solid var(--border);background:var(--bg);color:var(--txt);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mc-nav-btn:hover:not(:disabled){border-color:var(--blue);color:var(--bt)}
+.mc-nav-btn:disabled{opacity:.25;cursor:default}
+
+/* COMPARE SECTION */
+.compare-section{padding:0 20px 40px}
+.compare-title{font-size:16px;font-weight:700;margin-bottom:3px;display:flex;align-items:center;gap:7px}
+.compare-sub{font-size:12px;opacity:.5;margin-bottom:14px}
+.compare-scroll{overflow-x:auto}
+.compare-table{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;min-width:520px}
+.compare-row{display:grid;grid-template-columns:1.5fr 62px 62px 60px 1.3fr;gap:10px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px}
+.compare-row:last-child{border-bottom:none}
+.compare-head{font-size:11px;font-weight:700;opacity:.55;background:var(--bg)}
+.compare-name{display:flex;align-items:center;gap:8px;font-weight:600;overflow:hidden}
+.compare-name .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.compare-cell{text-align:center;font-weight:600}
+.compare-barcell{display:flex;align-items:center;gap:8px}
+.compare-barcell small{font-size:11.5px;opacity:.7;min-width:36px;font-weight:700}
+.compare-bar-wrap{flex:1;height:8px;background:var(--border);border-radius:5px;overflow:hidden}
+.compare-bar-fill{height:100%;border-radius:5px;background:var(--blue);transition:width .4s}
+
+/* OVERALL STATS: KPI + PIE */
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px}
+.kpi-card{background:var(--bg);border:1px solid var(--border);border-radius:11px;padding:13px 8px;text-align:center}
+.kpi-num{font-size:22px;font-weight:700;color:var(--bt);line-height:1.05}
+.kpi-lbl{font-size:10.5px;opacity:.55;margin-top:6px;font-weight:600}
+.pie-title{font-size:13px;font-weight:700;opacity:.6;margin-bottom:12px;text-align:center}
+.pie-layout{display:flex;gap:20px;align-items:center;flex-wrap:wrap;justify-content:center}
+.pie-holder{position:relative;flex-shrink:0}
+.pie-center-txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+.pie-center-num{font-size:26px;font-weight:700;color:var(--txt);line-height:1}
+.pie-center-lbl{font-size:10.5px;opacity:.5;margin-top:2px}
+.pie-legend{display:flex;flex-direction:column;gap:8px;flex:1;min-width:150px}
+.pie-leg-item{display:flex;align-items:center;gap:8px;font-size:12.5px}
+.pie-leg-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.pie-leg-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.pie-leg-val{opacity:.65;font-weight:700;font-size:11.5px;flex-shrink:0}
+.pie-empty{text-align:center;opacity:.45;padding:14px 10px 2px;font-size:13px}
+.overall-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.overall-toolbar .pie-title{margin-bottom:0;text-align:right}
+.omonth-nav{display:flex;align-items:center;gap:6px}
+.omonth-nav .mlabel{font-size:12.5px;font-weight:700;min-width:104px;text-align:center}
+.line-chart-wrap{width:100%;overflow:hidden}
+.line-chart-wrap svg{display:block}
+.chart-legend2{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:12px;justify-content:center}
+.cl2-item{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600}
+.cl2-item b{color:var(--bt)}
+.cl2-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="page-title">🔥 <span data-i18n="page.title">تعقب العادات</span></div>
+  <div class="header-btns">
+    <button class="btn-clear" onclick="clearAllData()">🗑 <span data-i18n="btn.clearAll">مسح الكل</span></button>
+    <button class="btn-clear" onclick="openOverall()">📊 <span data-i18n="btn.overall">الإحصائيات</span></button>
+    <button class="btn-add" onclick="openAddModal()">+ <span data-i18n="btn.newHabit">عادة جديدة</span></button>
+  </div>
+</div>
+
+<div class="stats-bar" id="stats-bar"></div>
+
+<div class="week-header" id="week-header"></div>
+<div class="habits-list" id="habits-list"></div>
+<div class="compare-section" id="compare-section"></div>
+
+<!-- ADD HABIT MODAL -->
+<div class="overlay" id="add-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" data-i18n="modal.newHabit">عادة جديدة</div>
+      <button class="modal-close" onclick="closeAll()">✕</button>
+    </div>
+    <div class="fl">
+      <label data-i18n="field.name">اسم العادة *</label>
+      <input class="fi" id="h-name" placeholder="مثال: قراءة يومية" data-i18n-ph="field.name.ph" oninput="liveSaveHabit()">
+    </div>
+    <div class="fl">
+      <label data-i18n="field.icon">الأيقونة</label>
+      <div class="emoji-grid" id="emoji-grid"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-p" onclick="closeAll()" data-i18n="btn.done">تم ✓</button>
+      <button class="btn-sec" onclick="closeAll()" data-i18n="btn.close">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- HABIT STATS MODAL -->
+<div class="overlay" id="stats-overlay">
+  <div class="modal stats-modal">
+    <div class="modal-header">
+      <div class="modal-title" id="sm-title" data-i18n="modal.habitStats">إحصائيات العادة</div>
+      <button class="modal-close" onclick="closeAll()">✕</button>
+    </div>
+    <div id="stats-modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn-p" onclick="closeAll()" data-i18n="btn.close">إغلاق</button>
+      <button class="btn-sec" id="sm-del-btn">🗑 <span data-i18n="btn.deleteHabit">حذف العادة</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- OVERALL STATS MODAL -->
+<div class="overlay" id="overall-overlay">
+  <div class="modal stats-modal">
+    <div class="modal-header">
+      <div class="modal-title">📊 <span data-i18n="overall.title">الإحصائيات العامة</span></div>
+      <button class="modal-close" onclick="closeAll()">✕</button>
+    </div>
+    <div id="overall-body"></div>
+    <div class="modal-actions">
+      <button class="btn-p" onclick="closeAll()" data-i18n="btn.close">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.documentElement.setAttribute('data-theme', localStorage.getItem('app-theme')||'light');
+window.addEventListener('message', e=>{
+  if(e.data?.type==='change-theme') document.documentElement.setAttribute('data-theme', e.data.theme);
+  if(e.data?.type==='change-lang') applyLang(e.data.lang);
+});
+
+// ── اللغة ──
+const I18N = {
+  ar: {
+    'page.title':'تعقب العادات', 'btn.clearAll':'مسح الكل', 'btn.newHabit':'عادة جديدة',
+    'modal.newHabit':'عادة جديدة', 'field.name':'اسم العادة *', 'field.name.ph':'مثال: قراءة يومية', 'field.icon':'الأيقونة',
+    'btn.done':'تم ✓', 'btn.close':'إغلاق', 'modal.habitStats':'إحصائيات العادة', 'btn.deleteHabit':'حذف العادة',
+    'wh.label':'العادة', 'stat.today':'اليوم', 'stat.bestStreak':'🔥 أعلى سلسلة', 'stat.day':'يوم',
+    'stat.week':'📊 الأسبوع', 'stat.total':'إجمالي', 'stat.habit':'عادة',
+    'empty.noHabits':'لا توجد عادات بعد', 'empty.addFirst':'أضف عادتك الأولى!',
+    'habit.streak':'🔥 {n} يوم', 'habit.noStreak':'لا سلسلة', 'habit.delete':'🗑 حذف', 'habit.hint':'اضغط للإحصائيات · اسحب للترتيب',
+    'stats.month':'هذا الشهر', 'stats.curStreak':'السلسلة الحالية', 'stats.bestStreak':'أفضل سلسلة',
+    'stats.totalDays':'إجمالي الأيام', 'stats.thisWeek':'هذا الأسبوع', 'stats.last7':'🗓️ آخر 7 أيام', 'stats.calendar':'📅',
+    'compare.title':'مقارنة العادات', 'compare.sub':'كل العادات جنبًا إلى جنب — إنجاز هذا الشهر',
+    'compare.habit':'العادة', 'compare.streak':'🔥 السلسلة', 'compare.best':'⭐ الأفضل', 'compare.total':'الإجمالي', 'compare.month':'هذا الشهر',
+    'btn.overall':'الإحصائيات', 'overall.title':'الإحصائيات العامة',
+    'kpi.habits':'عادة', 'kpi.today':'أنجزت اليوم', 'kpi.streak':'أعلى سلسلة', 'kpi.week':'نسبة الأسبوع', 'kpi.month':'نسبة الشهر', 'kpi.total':'إجمالي الإنجازات',
+    'chart.title':'📈 الإنجاز التراكمي خلال الشهر', 'pie.title':'🍩 توزيع الإنجازات', 'pie.center':'إنجاز', 'pie.empty':'لا توجد إنجازات في هذا الشهر',
+    'nav.prev':'الشهر السابق', 'nav.next':'الشهر التالي'
+  },
+  en: {
+    'page.title':'Habit Tracker', 'btn.clearAll':'Clear All', 'btn.newHabit':'New Habit',
+    'modal.newHabit':'New Habit', 'field.name':'Habit Name *', 'field.name.ph':'e.g. Daily Reading', 'field.icon':'Icon',
+    'btn.done':'Done ✓', 'btn.close':'Close', 'modal.habitStats':'Habit Stats', 'btn.deleteHabit':'Delete Habit',
+    'wh.label':'Habit', 'stat.today':'Today', 'stat.bestStreak':'🔥 Best Streak', 'stat.day':'days',
+    'stat.week':'📊 This Week', 'stat.total':'Total', 'stat.habit':'habits',
+    'empty.noHabits':'No habits yet', 'empty.addFirst':'Add your first habit!',
+    'habit.streak':'🔥 {n} days', 'habit.noStreak':'No streak', 'habit.delete':'🗑 Delete', 'habit.hint':'Tap for stats · Drag to reorder',
+    'stats.month':'This Month', 'stats.curStreak':'Current Streak', 'stats.bestStreak':'Best Streak',
+    'stats.totalDays':'Total Days', 'stats.thisWeek':'This Week', 'stats.last7':'🗓️ Last 7 Days', 'stats.calendar':'📅',
+    'compare.title':'Compare Habits', 'compare.sub':'All habits side by side — this month\'s completion',
+    'compare.habit':'Habit', 'compare.streak':'🔥 Streak', 'compare.best':'⭐ Best', 'compare.total':'Total', 'compare.month':'This Month',
+    'btn.overall':'Stats', 'overall.title':'Overall Statistics',
+    'kpi.habits':'Habits', 'kpi.today':'Done Today', 'kpi.streak':'Top Streak', 'kpi.week':'Week %', 'kpi.month':'Month %', 'kpi.total':'Total Done',
+    'chart.title':'📈 Cumulative Completions', 'pie.title':'🍩 Completions Distribution', 'pie.center':'done', 'pie.empty':'No completions this month',
+    'nav.prev':'Previous month', 'nav.next':'Next month'
+  }
+};
+let curLang = localStorage.getItem('app-lang') || 'ar';
+function t(key){ return (I18N[curLang] && I18N[curLang][key]) || key; }
+function applyLang(l){
+  curLang = l;
+  document.documentElement.setAttribute('lang', l==='ar'?'ar':'en');
+  document.documentElement.setAttribute('dir', l==='ar'?'rtl':'ltr');
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.getAttribute('data-i18n')); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder = t(el.getAttribute('data-i18n-ph')); });
+  render();
+}
+
+const KEY = 'tracker-habits';
+const EMOJIS = ['📚','💪','🏃','🧘','💊','💧','🥗','😴','✍️','🎯','🎨','🎸','🧹','🛁','🌿','📱','⚽','🏊','🚴','🧠','💻','📝','🍎','☕','🌅',
+  '🏋️','🚶','🧗','🏀','⚾','🎾','🏐','🥊','🧴','🪥','🚿','🧺','🍳','🥤','🍵','🙏','📅','⏰','💰','📈','🧾','🎹','🎻','🎤','📷','🌱','🐕','🐈','🧩','🗣️','🌐','✈️','🛌','🪴','❤️','😊','📖','🕹️'];
+let selEmoji = '⭐', detailHabitId = null, curHabitId = null;
+
+function getHabits(){ return JSON.parse(localStorage.getItem(KEY)||'[]'); }
+function saveHabits(h){ localStorage.setItem(KEY, JSON.stringify(h)); }
+function todayStr(){ return new Date().toISOString().split('T')[0]; }
+
+function last7Days(){
+  const days=[]; const d=new Date();
+  for(let i=6;i>=0;i--){ const dd=new Date(d); dd.setDate(d.getDate()-i); days.push(dd.toISOString().split('T')[0]); }
+  return days;
+}
+const DAY_NAMES={
+  ar:['أحد','اثن','ثلث','أرب','خمس','جمع','سبت'],
+  en:['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+};
+const MONTH_NAMES={
+  ar:['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'],
+  en:['January','February','March','April','May','June','July','August','September','October','November','December']
+};
+
+function clearAllData(){
+  localStorage.removeItem(KEY);
+  render();
+}
+
+function render(){
+  const habits = getHabits(), days = last7Days(), today = todayStr();
+
+  // Week header
+  const wh = document.getElementById('week-header');
+  wh.innerHTML = `<div class="wh-label">${t('wh.label')}</div>` + days.map(d=>{
+    const dt = new Date(d+'T12:00:00'), isT = d===today;
+    return `<div class="wh-day${isT?' today-col':''}">${DAY_NAMES[curLang][dt.getDay()]}${isT?'<br>●':''}</div>`;
+  }).join('');
+
+  // Summary stats
+  const doneToday = habits.filter(h=>(h.log||[]).includes(today)).length;
+  const maxStr = habits.reduce((m,h)=>Math.max(m,calcStreak(h)),0);
+  const weekTotal = habits.reduce((acc,h)=>acc+days.filter(d=>(h.log||[]).includes(d)).length,0);
+  const weekPct = habits.length*7>0 ? Math.round(weekTotal/(habits.length*7)*100) : 0;
+
+  document.getElementById('stats-bar').innerHTML = `
+    <div class="stat-chip">${t('stat.today')} <b>${doneToday}/${habits.length}</b></div>
+    <div class="stat-chip">${t('stat.bestStreak')} <b>${maxStr} ${t('stat.day')}</b></div>
+    <div class="stat-chip">${t('stat.week')} <b>${weekPct}%</b></div>
+    <div class="stat-chip">${t('stat.total')} <b>${habits.length}</b> ${t('stat.habit')}</div>
+  `;
+
+  if(!habits.length){
+    document.getElementById('habits-list').innerHTML = `<div class="empty"><div class="empty-icon">🔥</div><div style="font-size:15px">${t('empty.noHabits')}<br>${t('empty.addFirst')}</div></div>`;
+    document.getElementById('compare-section').innerHTML = '';
+    return;
+  }
+
+  const listEl = document.getElementById('habits-list');
+  listEl.ondragover = e=>e.preventDefault();
+  listEl.ondrop = e=>{ e.preventDefault(); dropHabit(null); };
+  listEl.innerHTML = habits.map(h=>{
+    const streak = calcStreak(h);
+    const checks = days.map(d=>{
+      const done = (h.log||[]).includes(d);
+      const isFuture = d > today;
+      return `<div class="habit-check${done?' done':''}${isFuture?' future':''}" onclick="${!isFuture?`toggleDay('${h.id}','${d}')`:''}">${done?'✓':''}</div>`;
+    }).join('');
+    return `<div class="habit-row" draggable="true"
+      ondragstart="onHabitDragStart(event,'${h.id}')"
+      ondragover="event.preventDefault()"
+      ondrop="event.preventDefault();event.stopPropagation();dropHabit('${h.id}')">
+      <div class="habit-info-col" onclick="openStats('${h.id}')">
+        <div class="habit-info">
+          <span class="habit-icon">${h.icon||'⭐'}</span>
+          <div>
+            <div class="habit-name">${esc(h.name)}</div>
+            ${streak>0?`<div class="habit-streak">${t('habit.streak').replace('{n}',streak)}</div>`:`<div class="habit-streak" style="opacity:.3">${t('habit.noStreak')}</div>`}
+          </div>
+        </div>
+        <div class="habit-meta">
+          <button class="habit-del-btn" onclick="event.stopPropagation();deleteHabit('${h.id}')">${t('habit.delete')}</button>
+          <span class="habit-tap-hint">${t('habit.hint')}</span>
+        </div>
+      </div>
+      ${checks}
+    </div>`;
+  }).join('');
+
+  renderCompare(habits);
+}
+
+// ── قسم مقارنة كل العادات ──
+function renderCompare(habits){
+  const el = document.getElementById('compare-section');
+  if(!habits || !habits.length){ el.innerHTML=''; return; }
+  const now = new Date();
+  const daysSoFar = now.getDate();
+  const prefix = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+
+  const rows = habits.map(h=>{
+    const log = h.log||[];
+    const monthCount = log.filter(d=>d.startsWith(prefix)).length;
+    const pct = daysSoFar>0 ? Math.round(monthCount/daysSoFar*100) : 0;
+    return `<div class="compare-row">
+      <div class="compare-name"><span class="habit-icon" style="font-size:17px">${h.icon||'⭐'}</span><span class="nm">${esc(h.name)}</span></div>
+      <div class="compare-cell" style="color:var(--ot)">🔥 ${calcStreak(h)}</div>
+      <div class="compare-cell">${calcBestStreak(h)}</div>
+      <div class="compare-cell">${log.length}</div>
+      <div class="compare-barcell"><small>${pct}%</small><div class="compare-bar-wrap"><div class="compare-bar-fill" style="width:${pct}%"></div></div></div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="compare-title">📊 ${t('compare.title')}</div>
+    <div class="compare-sub">${t('compare.sub')}</div>
+    <div class="compare-scroll"><div class="compare-table">
+      <div class="compare-row compare-head">
+        <div>${t('compare.habit')}</div>
+        <div class="compare-cell">${t('compare.streak')}</div>
+        <div class="compare-cell">${t('compare.best')}</div>
+        <div class="compare-cell">${t('compare.total')}</div>
+        <div>${t('compare.month')}</div>
+      </div>
+      ${rows}
+    </div></div>`;
+}
+
+// ── السحب والإفلات لترتيب العادات ──
+let draggedHabitId = null;
+function onHabitDragStart(e, id){ draggedHabitId = id; e.dataTransfer.effectAllowed='move'; try{ e.dataTransfer.setData('text/plain', id); }catch(err){} }
+function dropHabit(beforeId){
+  if(!draggedHabitId) return;
+  const habits = getHabits();
+  const idx = habits.findIndex(h=>h.id===draggedHabitId);
+  draggedHabitId = null;
+  if(idx<0) return;
+  const [dragged] = habits.splice(idx,1);
+  let insertAt = habits.length;
+  if(beforeId){
+    const bIdx = habits.findIndex(h=>h.id===beforeId);
+    if(bIdx>=0) insertAt = bIdx;
+  }
+  habits.splice(insertAt, 0, dragged);
+  saveHabits(habits);
+  render();
+}
+
+function calcStreak(h){
+  let streak=0; const d=new Date();
+  while(true){
+    const s=d.toISOString().split('T')[0];
+    if(!(h.log||[]).includes(s)) break;
+    streak++; d.setDate(d.getDate()-1);
+  }
+  return streak;
+}
+
+function calcBestStreak(h){
+  const log=(h.log||[]).slice().sort();
+  if(!log.length) return 0;
+  let best=1,cur=1;
+  for(let i=1;i<log.length;i++){
+    const a=new Date(log[i-1]+'T12:00:00'), b=new Date(log[i]+'T12:00:00');
+    if((b-a)/(864e5)===1){ cur++; if(cur>best) best=cur; } else cur=1;
+  }
+  return best;
+}
+
+function toggleDay(id, day){
+  const habits=getHabits(), h=habits.find(h=>h.id===id);
+  if(!h) return;
+  h.log=h.log||[];
+  if(h.log.includes(day)) h.log=h.log.filter(x=>x!==day); else h.log.push(day);
+  saveHabits(habits); render();
+}
+
+function deleteHabit(id){ saveHabits(getHabits().filter(h=>h.id!==id)); render(); }
+
+// ── الإحصائيات العامة (Line Chart + KPI) ──
+const PIE_COLORS = ['#2563eb','#16a34a','#ea580c','#db2777','#9333ea','#0891b2','#ca8a04','#dc2626','#0d9488','#7c3aed','#4f46e5','#65a30d'];
+
+// رسم خطي (Line Chart) بصيغة SVG بدون مكتبات خارجية.
+// series: [{name, icon, color, cum:[أرقام تراكمية لكل يوم]}] ، dayNums: أرقام أيام الشهر
+function lineChartSVG(series, dayNums, emptyText){
+  const n = dayNums.length;
+  const padL=34, padR=14, padT=12, padB=26, H=220, plotH=H-padT-padB;
+  const stepX = n>1 ? Math.max(13, Math.min(30, 430/(n-1))) : 0;
+  const plotW = stepX*(n-1);
+  const W = Math.max(padL+padR+plotW, 300);
+  const plotRight = padL+plotW;
+
+  let maxY = 0;
+  series.forEach(s=>s.cum.forEach(v=>{ if(v>maxY) maxY=v; }));
+  const hasData = maxY>0;
+  const steps = Math.min(4, Math.max(1, maxY||1));
+  const niceMax = hasData ? Math.ceil(maxY/steps)*steps : 1;
+  const xc = i=> padL + i*stepX;
+  const yc = v=> padT + plotH*(1 - v/niceMax);
+
+  // شبكة أفقية + قيم المحور الرأسي
+  let grid='';
+  for(let i=0;i<=steps;i++){
+    const yy = padT + plotH*i/steps, val = Math.round(niceMax*(1-i/steps));
+    grid += `<line x1="${padL}" y1="${yy.toFixed(1)}" x2="${plotRight}" y2="${yy.toFixed(1)}" stroke="var(--border)" stroke-width="1"/>`;
+    grid += `<text x="${padL-6}" y="${(yy+3).toFixed(1)}" text-anchor="end" font-size="9.5" fill="var(--txt)" opacity=".5">${val}</text>`;
+  }
+  // تسميات أيام الشهر (كل عدة أيام)
+  const k = Math.max(1, Math.ceil(n/10));
+  let xlab='';
+  dayNums.forEach((d,i)=>{ if(i%k===0||i===n-1){ xlab += `<text x="${xc(i).toFixed(1)}" y="${H-padB+15}" text-anchor="middle" font-size="9" fill="var(--txt)" opacity=".5">${d}</text>`; }});
+
+  // الخطوط
+  let lines='';
+  if(hasData){
+    series.forEach(s=>{
+      const path = 'M'+s.cum.map((v,i)=>xc(i).toFixed(1)+' '+yc(v).toFixed(1)).join(' L');
+      lines += `<path d="${path}" fill="none" stroke="${s.color}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`;
+      // نقطة عند آخر يوم فيه قيمة
+      const last = s.cum[n-1];
+      if(last>0) lines += `<circle cx="${xc(n-1).toFixed(1)}" cy="${yc(last).toFixed(1)}" r="3" fill="${s.color}"/>`;
+    });
+  }
+  const emptyNote = hasData ? '' : `<text x="${((padL+plotRight)/2).toFixed(1)}" y="${(padT+plotH/2).toFixed(1)}" text-anchor="middle" font-size="12" fill="var(--txt)" opacity=".4">${emptyText}</text>`;
+
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block">
+    ${grid}${lines}${xlab}${emptyNote}
+  </svg>`;
+}
+
+let overallViewYear, overallViewMonth;   // الشهر المعروض في نافذة الإحصائيات العامة
+
+function openOverall(){
+  const now = new Date();
+  overallViewYear = now.getFullYear();
+  overallViewMonth = now.getMonth();
+  renderOverall();
+  document.getElementById('overall-overlay').classList.add('show');
+}
+
+function changeOverallMonth(delta){
+  const now = new Date();
+  if(delta>0 && overallViewYear===now.getFullYear() && overallViewMonth>=now.getMonth()) return;
+  overallViewMonth += delta;
+  if(overallViewMonth<0){ overallViewMonth=11; overallViewYear--; }
+  if(overallViewMonth>11){ overallViewMonth=0; overallViewYear++; }
+  renderOverall();
+}
+
+function renderOverall(){
+  const habits = getHabits();
+  const today = todayStr();
+  const now = new Date();
+  const weekDays = last7Days();
+  const vy = overallViewYear, vm = overallViewMonth;
+  const isCurrentMonth = (vy===now.getFullYear() && vm===now.getMonth());
+  const prefix = vy+'-'+String(vm+1).padStart(2,'0');
+
+  // ── KPI (مقاييس عامة حالية) ──
+  const doneToday = habits.filter(h=>(h.log||[]).includes(today)).length;
+  const bestStreak = habits.reduce((m,h)=>Math.max(m,calcStreak(h)),0);
+  const weekTotal = habits.reduce((a,h)=>a+weekDays.filter(d=>(h.log||[]).includes(d)).length,0);
+  const weekPct = habits.length ? Math.round(weekTotal/(habits.length*7)*100) : 0;
+  const grandTotal = habits.reduce((a,h)=>a+(h.log||[]).length,0);
+  // نسبة الشهر المعروض
+  const daysDenom = isCurrentMonth ? now.getDate() : new Date(vy, vm+1, 0).getDate();
+  const monthCounts = habits.map(h=>(h.log||[]).filter(d=>d.startsWith(prefix)).length);
+  const monthTotal = monthCounts.reduce((a,b)=>a+b,0);
+  const monthPct = habits.length && daysDenom ? Math.round(monthTotal/(habits.length*daysDenom)*100) : 0;
+
+  const kpis = [
+    {num:habits.length, lbl:t('kpi.habits')},
+    {num:`${doneToday}/${habits.length}`, lbl:t('kpi.today')},
+    {num:`🔥 ${bestStreak}`, lbl:t('kpi.streak')},
+    {num:`${weekPct}%`, lbl:t('kpi.week')},
+    {num:`${monthPct}%`, lbl:t('kpi.month')},
+    {num:grandTotal, lbl:t('kpi.total')}
+  ];
+  const kpiHTML = kpis.map(k=>`<div class="kpi-card"><div class="kpi-num">${k.num}</div><div class="kpi-lbl">${k.lbl}</div></div>`).join('');
+
+  // ── الرسم الخطي = الإنجاز التراكمي لكل عادة عبر أيام الشهر المعروض ──
+  const daysInMonth = new Date(vy, vm+1, 0).getDate();
+  const dayNums = Array.from({length:daysInMonth}, (_,i)=>i+1);
+  const series = habits.map((h,i)=>{
+    const log = h.log||[];
+    let run = 0;
+    const cum = dayNums.map(d=>{
+      const ds = prefix+'-'+String(d).padStart(2,'0');
+      if(log.includes(ds)) run++;
+      return run;
+    });
+    return {name:h.name, icon:h.icon||'⭐', color:PIE_COLORS[i%PIE_COLORS.length], total:monthCounts[i], cum};
+  });
+  const activeSeries = series.filter(s=>s.total>0);
+  const legend = activeSeries.map(s=>`<div class="cl2-item">
+      <span class="cl2-dot" style="background:${s.color}"></span>
+      <span>${s.icon} ${esc(s.name)} · <b>${s.total}</b></span>
+    </div>`).join('');
+
+  const mLabel = MONTH_NAMES[curLang][vm]+' '+vy;
+  const nextDisabled = isCurrentMonth ? 'disabled' : '';
+  const chartHTML = `
+    <div class="overall-toolbar">
+      <div class="pie-title">${t('chart.title')}</div>
+      <div class="omonth-nav">
+        <button class="mc-nav-btn" onclick="changeOverallMonth(-1)" title="${t('nav.prev')}">›</button>
+        <span class="mlabel">${mLabel}</span>
+        <button class="mc-nav-btn" onclick="changeOverallMonth(1)" ${nextDisabled} title="${t('nav.next')}">‹</button>
+      </div>
+    </div>
+    <div class="line-chart-wrap">${lineChartSVG(activeSeries, dayNums, t('pie.empty'))}</div>
+    ${activeSeries.length ? `<div class="chart-legend2">${legend}</div>` : ''}`;
+
+  document.getElementById('overall-body').innerHTML = `<div class="kpi-grid">${kpiHTML}</div>${chartHTML}`;
+}
+
+// ── STATS POPUP ──
+let statsViewYear, statsViewMonth;   // الشهر المعروض في نافذة الإحصائيات
+
+function openStats(id){
+  detailHabitId = id;
+  const now = new Date();
+  statsViewYear = now.getFullYear();
+  statsViewMonth = now.getMonth();
+  renderStats();
+}
+
+function changeStatsMonth(delta){
+  const now = new Date();
+  // لا تتجاوز الشهر الحالي إلى المستقبل
+  if(delta>0 && statsViewYear===now.getFullYear() && statsViewMonth>=now.getMonth()) return;
+  statsViewMonth += delta;
+  if(statsViewMonth<0){ statsViewMonth=11; statsViewYear--; }
+  if(statsViewMonth>11){ statsViewMonth=0; statsViewYear++; }
+  renderStats();
+}
+
+function renderStats(){
+  const id = detailHabitId;
+  const h = getHabits().find(h=>h.id===id);
+  if(!h) return;
+
+  const log = h.log||[];
+  const today = todayStr();
+  const streak = calcStreak(h);
+  const bestStreak = calcBestStreak(h);
+  const total = log.length;
+  const now = new Date();
+  const vy = statsViewYear, vm = statsViewMonth;
+  const isCurrentMonth = (vy===now.getFullYear() && vm===now.getMonth());
+  const monthStart = new Date(vy, vm, 1);
+  const daysInMonth = new Date(vy, vm+1, 0).getDate();
+  // للشهر الحالي نحسب النسبة حتى اليوم؛ للأشهر السابقة على كامل الشهر
+  const denom = isCurrentMonth ? now.getDate() : daysInMonth;
+  const vPrefix = vy+'-'+String(vm+1).padStart(2,'0');
+  const monthLog = log.filter(d=>d.startsWith(vPrefix));
+  const monthPct = denom>0 ? Math.round(monthLog.length/denom*100) : 0;
+  const weekDays = last7Days();
+  const weekDone = weekDays.filter(d=>log.includes(d)).length;
+  const weekPct = Math.round(weekDone/7*100);
+
+  // Ring circumference
+  const circ = 2*Math.PI*54;
+  const offset = circ*(1-monthPct/100);
+
+  // Month calendar
+  const mName = MONTH_NAMES[curLang][vm]+' '+vy;
+  const firstDow = monthStart.getDay();
+  let calHTML = DAY_NAMES[curLang].map(d=>`<div class="mc-dh">${d}</div>`).join('');
+  for(let i=0;i<firstDow;i++) calHTML+=`<div class="mc-day empty-d"></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${vy}-${String(vm+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const done=log.includes(ds), isT=ds===today, isFuture=ds>today;
+    calHTML+=`<div class="mc-day${done?' done':''}${isT?' today-d':''}${isFuture?' other-m':''}" onclick="${!isFuture?`statsToggle('${id}','${ds}')`:''}">${d}</div>`;
+  }
+  const nextDisabled = isCurrentMonth ? 'disabled' : '';
+
+  // Week bars
+  const maxBar = 1;
+  const bars7 = weekDays.map(d=>{
+    const done = log.includes(d);
+    const dt = new Date(d+'T12:00:00');
+    const isT = d===today;
+    return `<div class="week-bar-wrap">
+      <div class="week-bar-fill" style="height:40px">
+        <div class="week-bar-inner" style="height:${done?100:0}%;background:${done?'var(--green)':'var(--border)'}"></div>
+      </div>
+      <div class="week-bar-lbl${isT?' today-col':''}" style="${isT?'color:var(--bt);opacity:1':''}">${DAY_NAMES[curLang][dt.getDay()]}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('sm-title').textContent = h.icon+' '+h.name;
+  document.getElementById('sm-del-btn').onclick = ()=>{ deleteHabit(id); closeAll(); };
+
+  document.getElementById('stats-modal-body').innerHTML = `
+    <div class="ring-wrap">
+      <div style="position:relative;width:120px;height:120px">
+        <svg class="ring-svg" width="120" height="120" viewBox="0 0 120 120">
+          <circle class="ring-track" cx="60" cy="60" r="54"/>
+          <circle class="ring-fill" cx="60" cy="60" r="54"
+            stroke-dasharray="${circ.toFixed(2)}"
+            stroke-dashoffset="${offset.toFixed(2)}"/>
+        </svg>
+        <div class="ring-center">
+          <div class="ring-pct">${monthPct}%</div>
+          <div class="ring-pct-lbl">${MONTH_NAMES[curLang][vm]}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-box-num" style="color:var(--ot)">🔥 ${streak}</div>
+        <div class="stat-box-lbl">${t('stats.curStreak')}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-num">⭐ ${bestStreak}</div>
+        <div class="stat-box-lbl">${t('stats.bestStreak')}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-num">${total}</div>
+        <div class="stat-box-lbl">${t('stats.totalDays')}</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-num">${weekDone}/7</div>
+        <div class="stat-box-lbl">${t('stats.thisWeek')}</div>
+      </div>
+    </div>
+
+    <div class="week-bars-title">${t('stats.last7')}</div>
+    <div class="week-bars">${bars7}</div>
+
+    <div class="month-cal-nav">
+      <button class="mc-nav-btn" onclick="changeStatsMonth(-1)" title="السابق">›</button>
+      <div class="month-cal-title">${t('stats.calendar')} ${mName}</div>
+      <button class="mc-nav-btn" onclick="changeStatsMonth(1)" ${nextDisabled} title="التالي">‹</button>
+    </div>
+    <div class="month-cal">${calHTML}</div>
+  `;
+
+  document.getElementById('stats-overlay').classList.add('show');
+}
+
+function statsToggle(id, day){
+  const habits=getHabits(), h=habits.find(h=>h.id===id);
+  if(!h) return;
+  h.log=h.log||[];
+  if(h.log.includes(day)) h.log=h.log.filter(x=>x!==day); else h.log.push(day);
+  saveHabits(habits); render(); renderStats();
+}
+
+// ── ADD HABIT MODAL ──
+function openAddModal(){
+  curHabitId = null;
+  document.getElementById('h-name').value='';
+  selEmoji='⭐';
+  document.getElementById('emoji-grid').innerHTML = EMOJIS.map(e=>`<button class="emoji-btn${e===selEmoji?' sel':''}" onclick="pickEmoji('${e}')">${e}</button>`).join('');
+  document.getElementById('add-overlay').classList.add('show');
+  setTimeout(()=>document.getElementById('h-name').focus(),50);
+}
+function pickEmoji(e){
+  selEmoji=e;
+  document.querySelectorAll('.emoji-btn').forEach(b=>{b.classList.remove('sel'); if(b.textContent===e) b.classList.add('sel');});
+  liveSaveHabit();
+}
+// حفظ فوري: أول حرف في الاسم ينشئ العادة فوراً حتى لا تُفقد عند الانتقال لصفحة أخرى
+function liveSaveHabit(){
+  const name=document.getElementById('h-name').value.trim();
+  if(!name) return;
+  const habits=getHabits();
+  if(curHabitId){
+    const h=habits.find(h=>h.id===curHabitId);
+    if(h){ h.name=name; h.icon=selEmoji; }
+  } else {
+    const h={id:'h'+Date.now(),name,icon:selEmoji,log:[],createdAt:new Date().toISOString()};
+    habits.push(h);
+    curHabitId=h.id;
+  }
+  saveHabits(habits); render();
+}
+
+function closeAll(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show')); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeAll(); });
+applyLang(curLang);
+</script>
+<script>
+/* إغلاق النافذة المنبثقة بالضغط خارجها (على الخلفية) بدل زر ✕ */
+(function(){
+  function bind(ov){
+    var down=false;
+    ov.addEventListener('pointerdown',function(e){ down=(e.target===ov); });
+    ov.addEventListener('click',function(e){
+      if(e.target===ov && down){
+        var btn=ov.querySelector('.modal-close, .ch-close');
+        if(btn){ btn.click(); } else { ov.classList.remove('show'); }
+      }
+    });
+  }
+  document.querySelectorAll('.overlay, #checkin-overlay').forEach(bind);
+})();
+</script>
+<script>
+/* أمسك واسحب للتمرير في كل الاتجاهات (بالماوس) — drag-to-scroll */
+(function(){
+  var down=false, moved=false, sx=0, sy=0, elX=null, elY=null, baseL=0, baseT=0;
+  var NODRAG='a,button,input,textarea,select,label,option,[contenteditable="true"],[draggable="true"],.no-drag';
+  function scrollable(el, axis){
+    while(el && el.nodeType===1 && el!==document.body && el!==document.documentElement){
+      var s=getComputedStyle(el), o=(axis==='y'?s.overflowY:s.overflowX);
+      var can=(o==='auto'||o==='scroll'||o==='overlay');
+      var big=(axis==='y'? el.scrollHeight>el.clientHeight+1 : el.scrollWidth>el.clientWidth+1);
+      if(can && big) return el;
+      el=el.parentElement;
+    }
+    return axis==='y' ? (document.scrollingElement||document.documentElement) : null;
+  }
+  addEventListener('pointerdown',function(e){
+    if(e.pointerType && e.pointerType!=='mouse') return;   /* اللمس يمرّر بشكل طبيعي */
+    if(e.button!==0) return;
+    if(e.target.closest && e.target.closest(NODRAG)) return;
+    if(getComputedStyle(e.target).cursor==='text') return;
+    down=true; moved=false; sx=e.clientX; sy=e.clientY;
+    elY=scrollable(e.target,'y'); elX=scrollable(e.target,'x');
+    baseT=elY?elY.scrollTop:0; baseL=elX?elX.scrollLeft:0;
+  },true);
+  addEventListener('pointermove',function(e){
+    if(!down) return;
+    var dx=e.clientX-sx, dy=e.clientY-sy;
+    if(!moved){
+      if(Math.abs(dx)<5 && Math.abs(dy)<5) return;
+      moved=true;
+      document.body.style.cursor='grabbing';
+      document.body.style.userSelect='none';
+    }
+    if(e.cancelable) e.preventDefault();
+    if(elY) elY.scrollTop=baseT-dy;
+    if(elX) elX.scrollLeft=baseL-dx;
+  },{passive:false,capture:true});
+  function end(){
+    if(!down) return;
+    down=false;
+    document.body.style.cursor='';
+    document.body.style.userSelect='';
+    if(moved){                       /* امنع النقرة الناتجة عن السحب */
+      var sup=function(ev){ ev.stopPropagation(); ev.preventDefault(); removeEventListener('click',sup,true); };
+      addEventListener('click',sup,true);
+      setTimeout(function(){ removeEventListener('click',sup,true); },0);
+    }
+  }
+  addEventListener('pointerup',end,true);
+  addEventListener('pointercancel',end,true);
+})();
+</script>
+<script>
+/* حجم الخط الموحّد (font-scale) — يُطبّق إعداد "حجم الخط" من الإعدادات على كل الصفحات.
+   الصفحة العليا فقط تُطبّق zoom؛ الصفحة داخل iframe يُصغّرها تكبير القوقعة تلقائياً. */
+(function(){
+  var M={small:0.85, normal:1, large:1.15};
+  function cur(){ var v=localStorage.getItem('font-scale'); return M[v]?v:'normal'; }
+  function apply(){
+    if(window.top!==window.self) return;            /* مؤطّرة: القوقعة تتكفّل بالتصغير */
+    var s=M[cur()]||1, de=document.documentElement;
+    de.style.zoom=s;
+    /* تعويض الارتفاع حتى لا يظهر فراغ أسفل الشاشة (zoom يتعارض مع 100vh) */
+    de.style.height = s===1 ? '' : (100/s)+'vh';
+    if(document.body) document.body.style.minHeight = s===1 ? '' : (100/s)+'vh';
+  }
+  if(document.body) apply(); else document.addEventListener('DOMContentLoaded',apply);
+  window.addEventListener('storage', function(e){ if(e.key==='font-scale') apply(); });
+})();
+</script>
+</body>
+</html>

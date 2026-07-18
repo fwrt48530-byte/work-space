@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>المهام</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f7f6f3;--bg2:#fff;--txt:#1a1a1a;--border:#e5e4df;--blue:#2563eb;--bl:#eff6ff;--bt:#2563eb;--green:#16a34a;--gl:#f0fdf4;--gt:#16a34a;--orange:#ea580c;--ol:#fff7ed;--ot:#ea580c;--r:10px;--sh:0 1px 3px rgba(0,0,0,.08)}
+[data-theme="dark"]{--bg:#121212;--bg2:#1e1e1e;--txt:#e4e4e7;--border:#27272a;--bl:#1e3a5f;--bt:#60a5fa;--gl:#14532d;--gt:#4ade80;--ol:#431407;--ot:#fb923c}
+[data-theme="dim"]{--bg:#0f172a;--bg2:#1e293b;--txt:#f8fafc;--border:#334155;--bl:#1e3a5f;--bt:#7dd3fc;--gl:#14532d;--gt:#4ade80;--ol:#431407;--ot:#fb923c}
+html,body{min-height:100vh;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;background:var(--bg);color:var(--txt)}
+
+/* PAGE */
+.page-header{padding:20px 24px 0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.page-title{font-size:20px;font-weight:700}
+.header-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn-add{padding:8px 16px;border:none;border-radius:8px;background:var(--blue);color:#fff;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;transition:opacity .12s}
+.btn-add:hover{opacity:.88}
+.btn-groups{padding:7px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--txt);font-family:inherit;font-size:12.5px;cursor:pointer;transition:background .12s}
+.btn-groups:hover{background:var(--bg)}
+.btn-menu{display:none;padding:7px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--txt);font-size:15px;cursor:pointer}
+
+/* LAYOUT */
+.app{display:flex;align-items:stretch;gap:0;min-height:calc(100vh - 68px);padding:16px 24px 24px}
+.sidebar{width:238px;flex-shrink:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px 12px;display:flex;flex-direction:column;gap:18px;align-self:flex-start;position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none}
+.sidebar::-webkit-scrollbar{display:none}
+.sb-section{display:flex;flex-direction:column;gap:4px}
+.sb-title{font-size:11px;font-weight:700;letter-spacing:.4px;opacity:.45;padding:0 8px 4px;text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:500;color:var(--txt);transition:background .12s;user-select:none}
+.sb-item:hover{background:var(--bg)}
+.sb-item.active{background:var(--bl);color:var(--bt);font-weight:600}
+.sb-item .sb-ico{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.sb-item .sb-label{flex:1}
+.sb-item .sb-badge{font-size:11px;font-weight:600;background:var(--bg);color:var(--txt);opacity:.7;padding:1px 7px;border-radius:999px;min-width:20px;text-align:center}
+.sb-item.active .sb-badge{background:var(--bg2);color:var(--bt);opacity:1}
+.sb-sep{height:1px;background:var(--border);margin:5px 4px}
+
+/* GROUP CHECKS */
+.sb-group{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:13px;transition:background .12s;user-select:none}
+.sb-group:hover{background:var(--bg)}
+.sb-check{width:17px;height:17px;border:1.5px solid var(--border);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;transition:.12s}
+.sb-group.on .sb-check{background:var(--blue);border-color:var(--blue)}
+.sb-group .sb-gname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-group .sb-badge{font-size:11px;font-weight:600;background:var(--bg);opacity:.7;padding:1px 7px;border-radius:999px;min-width:20px;text-align:center}
+.sb-empty{font-size:12px;opacity:.4;padding:6px 10px}
+.sb-mini-btn{margin-top:2px;padding:6px 10px;border:1px dashed var(--border);border-radius:8px;background:transparent;color:var(--txt);opacity:.7;font-family:inherit;font-size:12px;cursor:pointer;text-align:center}
+.sb-mini-btn:hover{opacity:1;background:var(--bg)}
+
+/* MAIN */
+.main{flex:1;min-width:0;padding-inline-start:22px}
+.main-header{display:flex;align-items:baseline;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.main-title{font-size:18px;font-weight:700}
+.main-count{font-size:13px;opacity:.5;font-weight:500}
+.boxes{display:flex;flex-wrap:nowrap;gap:16px;align-items:flex-start;overflow-x:auto;padding-bottom:8px;cursor:grab}
+.boxes.panning{cursor:grabbing;user-select:none}
+
+/* GROUP BOX */
+.gbox{flex:1 1 300px;min-width:270px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);display:flex;flex-direction:column;overflow:hidden;transition:border-color .12s}
+.gbox.drag-over{border-color:var(--blue);box-shadow:0 0 0 2px var(--bl)}
+.gbox-header{padding:13px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.gbox-dot{width:9px;height:9px;border-radius:50%;background:var(--blue);flex-shrink:0}
+.gbox-title{font-size:14px;font-weight:700;flex:1}
+.gbox-count{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--bl);color:var(--bt)}
+.gbox-body{padding:10px;display:flex;flex-direction:row;flex-wrap:wrap;gap:8px;min-height:56px}
+.gbox-empty{width:100%;text-align:center;padding:18px 12px;opacity:.32;font-size:12.5px}
+.boxes-empty{flex:1;width:100%;text-align:center;padding:60px 20px;opacity:.4;font-size:14px;line-height:1.9}
+
+/* TASK CARD */
+.task-card{flex:1 1 140px;min-width:0;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:12px;cursor:grab;transition:box-shadow .12s,border-color .12s}
+.task-card:hover{box-shadow:var(--sh);border-color:var(--blue)}
+.task-card.done-card{opacity:.72}
+.task-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.task-title{font-size:13.5px;font-weight:600;line-height:1.4}
+.task-title.struck{text-decoration:line-through;opacity:.6}
+.task-menu-btn{border:none;background:none;cursor:pointer;font-size:16px;color:var(--txt);opacity:.4;padding:0;flex-shrink:0}
+.task-menu-btn:hover{opacity:.9}
+.task-desc{font-size:12px;opacity:.55;margin-bottom:8px;line-height:1.5}
+.status-badge{display:inline-block;font-size:10.5px;padding:2px 8px;border-radius:999px;margin-bottom:6px;font-weight:600}
+.status-badge.todo{background:var(--bg2);color:var(--txt);border:1px solid var(--border)}
+.status-badge.in_progress{background:var(--ol);color:var(--ot)}
+.status-badge.done{background:var(--gl);color:var(--gt)}
+.task-due{font-size:11.5px;opacity:.5;margin-bottom:6px}
+.task-due.overdue{color:#dc2626;opacity:1}
+.progress-row{display:flex;align-items:center;gap:8px;margin-top:4px}
+.progress-bar{flex:1;height:5px;background:var(--border);border-radius:99px;overflow:hidden}
+.progress-fill{height:100%;border-radius:99px;background:var(--blue);transition:width .3s}
+.progress-fill.done{background:var(--green)}
+.progress-pct{font-size:11px;font-weight:600;color:var(--bt);min-width:28px;text-align:left}
+.card-quick-btns{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
+.quick-btn{border:none;border-radius:6px;padding:4px 10px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .12s}
+.quick-btn:hover{opacity:.8}
+.quick-btn.prog{background:var(--ol);color:var(--ot)}
+.quick-btn.done{background:var(--gl);color:var(--gt)}
+.quick-btn.todo{background:var(--bg2);color:var(--txt);border:1px solid var(--border)}
+.quick-btn.today{background:var(--bg2);color:var(--txt);border:1px solid var(--border)}
+.quick-btn.today.active{background:var(--gl);color:var(--gt);border:1px solid transparent}
+.due-row{display:flex;gap:6px}
+.due-row .fi{flex:1}
+.btn-today-set{padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--txt);font-family:inherit;font-size:12.5px;cursor:pointer;white-space:nowrap}
+.btn-today-set:hover{background:var(--bg)}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center}
+.overlay.show{display:flex}
+.modal{background:var(--bg2);border-radius:14px;padding:24px;width:440px;max-width:94vw;box-shadow:0 16px 48px rgba(0,0,0,.25);animation:pop .2s ease;max-height:90vh;overflow-y:auto}
+@keyframes pop{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{border:none;background:none;font-size:18px;cursor:pointer;opacity:.5;color:var(--txt)}
+.fl{margin-bottom:12px}
+.fl label{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px}
+.fi,.fsel,.fta{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--txt);font-family:inherit;font-size:13.5px;outline:none;direction:rtl;transition:border-color .12s}
+.fi:focus,.fsel:focus,.fta:focus{border-color:var(--blue)}
+.fta{min-height:68px;resize:vertical}
+.range-row{display:flex;align-items:center;gap:10px}
+.range-row input[type=range]{flex:1;accent-color:var(--blue)}
+.range-val{font-size:14px;font-weight:700;color:var(--bt);min-width:36px;text-align:center}
+.modal-actions{display:flex;gap:8px;margin-top:16px}
+.btn-p{flex:1;padding:10px;border:none;border-radius:9px;background:var(--blue);color:#fff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.btn-p:hover{opacity:.88}
+.btn-danger{padding:10px 14px;border:none;border-radius:9px;background:#dc2626;color:#fff;font-family:inherit;font-size:13px;cursor:pointer}
+.btn-sec{padding:10px 14px;border:1px solid var(--border);border-radius:9px;background:transparent;color:var(--txt);font-family:inherit;font-size:14px;cursor:pointer}
+.btn-sec:hover{background:var(--bg)}
+
+/* GROUPS MANAGER */
+.groups-list{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;max-height:280px;overflow-y:auto}
+.group-item{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:9px}
+.group-item-name{flex:1;font-size:13.5px;font-weight:600}
+.group-edit-input{flex:1;padding:6px 10px;border:1px solid var(--blue);border-radius:7px;background:var(--bg);color:var(--txt);font-family:inherit;font-size:13px;outline:none}
+.group-del-btn{border:none;background:none;cursor:pointer;font-size:13px;opacity:.35;color:#dc2626;padding:4px}
+.group-del-btn:hover{opacity:.9}
+.group-save-btn{border:none;background:var(--green);color:#fff;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+.group-edit-btn{border:1px solid var(--border);background:transparent;color:var(--txt);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit}
+.groups-divider{height:1px;background:var(--border);margin:8px 0}
+
+/* CONTEXT MENU */
+.ctx-menu{position:fixed;background:var(--bg2);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);z-index:9999;min-width:160px;padding:5px;display:none}
+.ctx-menu.show{display:block}
+.ctx-item{padding:8px 12px;font-size:13px;cursor:pointer;border-radius:7px;display:flex;align-items:center;gap:8px;color:var(--txt)}
+.ctx-item:hover{background:var(--bg)}
+.ctx-item.danger{color:#dc2626}
+
+/* RESPONSIVE */
+@media(max-width:860px){
+  .app{padding:12px}
+  .btn-menu{display:inline-block}
+  .sidebar{position:fixed;top:0;right:0;bottom:0;z-index:900;border-radius:0;width:270px;max-height:100vh;transform:translateX(100%);transition:transform .22s ease;box-shadow:-8px 0 30px rgba(0,0,0,.2)}
+  [dir=ltr] .sidebar{right:auto;left:0;transform:translateX(-100%);box-shadow:8px 0 30px rgba(0,0,0,.2)}
+  .sidebar.open{transform:translateX(0)}
+  .main{padding-inline-start:0}
+  .sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:850}
+  .sb-backdrop.show{display:block}
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="page-title">✅ <span data-i18n="page.title">المهام</span></div>
+  <div class="header-actions">
+    <button class="btn-menu" onclick="toggleSidebar()">☰</button>
+    <button class="btn-groups" onclick="openGroupsManager()">📁 <span data-i18n="btn.groups">المجموعات</span></button>
+    <button class="btn-add" onclick="openModal()">+ <span data-i18n="btn.newTask">مهمة جديدة</span></button>
+  </div>
+</div>
+
+<div class="app">
+  <div class="sb-backdrop" id="sb-backdrop" onclick="toggleSidebar()"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-section">
+      <div class="sb-title" data-i18n="sidebar.views">العروض</div>
+      <div id="sb-views"></div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title" data-i18n="sidebar.groups">المجموعات</div>
+      <div id="sb-groups"></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="main-header">
+      <div class="main-title" id="main-title">—</div>
+      <div class="main-count" id="main-count"></div>
+    </div>
+    <div class="boxes" id="boxes"></div>
+  </main>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title" data-i18n="modal.newTask">مهمة جديدة</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="fl"><label data-i18n="field.title">العنوان *</label><input class="fi" id="m-title" placeholder="عنوان المهمة" data-i18n-ph="field.title.ph" oninput="liveSaveTask()"></div>
+    <div class="fl"><label data-i18n="field.desc">الوصف</label><textarea class="fta" id="m-desc" placeholder="وصف اختياري…" data-i18n-ph="field.desc.ph" oninput="liveSaveTask()"></textarea></div>
+    <div class="fl"><label data-i18n="field.group">المجموعة</label>
+      <select class="fsel" id="m-group" onchange="liveSaveTask()"><option value="" data-i18n="field.noGroup">— بلا مجموعة —</option></select>
+    </div>
+    <div class="fl"><label data-i18n="field.status">الحالة</label>
+      <select class="fsel" id="m-status" onchange="liveSaveTask()">
+        <option value="todo" data-i18n="status.todo">لم تبدأ</option>
+        <option value="in_progress" data-i18n="status.inProgress">جارية</option>
+        <option value="done" data-i18n="status.done">مكتملة</option>
+      </select>
+    </div>
+    <div class="fl"><label data-i18n="field.due">تاريخ الاستحقاق</label>
+      <div class="due-row">
+        <input class="fi" type="date" id="m-due" onchange="liveSaveTask()">
+        <button type="button" class="btn-today-set" onclick="setDueToday()" data-i18n="btn.today">اليوم</button>
+      </div>
+    </div>
+    <div class="fl">
+      <label><span data-i18n="field.progress">نسبة الإنجاز:</span> <span id="m-pct-display">0%</span></label>
+      <div class="range-row">
+        <input type="range" min="0" max="100" value="0" id="m-pct"
+          oninput="onPctChange(this.value)">
+        <span class="range-val" id="m-pct-v">0%</span>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-p" onclick="closeModal()" data-i18n="btn.done">تم ✓</button>
+      <button class="btn-danger" id="btn-delete" onclick="deleteTask()" style="display:none" data-i18n="btn.delete">حذف</button>
+      <button class="btn-sec" onclick="closeModal()" data-i18n="btn.close">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUPS MANAGER MODAL -->
+<div class="overlay" id="group-modal-overlay">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <div class="modal-title">📁 <span data-i18n="modal.manageGroups">إدارة المجموعات</span></div>
+      <button class="modal-close" onclick="closeGroupModal()">✕</button>
+    </div>
+    <div class="groups-list" id="groups-list-ui"></div>
+    <div class="groups-divider"></div>
+    <div class="fl"><label data-i18n="field.newGroup">مجموعة جديدة</label><input class="fi" id="g-name" placeholder="مثال: العمل / الدراسة" data-i18n-ph="field.newGroup.ph"></div>
+    <div class="modal-actions">
+      <button class="btn-p" onclick="saveGroup()" data-i18n="btn.add">+ إضافة</button>
+      <button class="btn-sec" onclick="closeGroupModal()" data-i18n="btn.close">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div class="ctx-menu" id="ctx">
+  <div class="ctx-item" onclick="ctxEdit()">✏️ <span data-i18n="ctx.edit">تعديل</span></div>
+  <div class="ctx-item" onclick="ctxMove('todo')">⬜ <span data-i18n="ctx.moveTodo">نقل: لم تبدأ</span></div>
+  <div class="ctx-item" onclick="ctxMove('in_progress')">🔄 <span data-i18n="ctx.moveProg">نقل: جارية</span></div>
+  <div class="ctx-item" onclick="ctxMove('done')">✅ <span data-i18n="ctx.moveDone">نقل: مكتملة</span></div>
+  <div class="ctx-item danger" onclick="ctxDelete()">🗑️ <span data-i18n="ctx.delete">حذف</span></div>
+</div>
+
+<script>
+document.documentElement.setAttribute('data-theme', localStorage.getItem('app-theme')||'light');
+window.addEventListener('message', e=>{
+  if(e.data?.type==='change-theme') document.documentElement.setAttribute('data-theme', e.data.theme);
+  if(e.data?.type==='tasks-cleaned') render();
+  if(e.data?.type==='change-lang') applyLang(e.data.lang);
+});
+
+// ── اللغة ──
+const I18N = {
+  ar: {
+    'page.title':'المهام', 'btn.groups':'المجموعات', 'btn.newTask':'مهمة جديدة',
+    'sidebar.views':'العروض', 'sidebar.groups':'المجموعات',
+    'filter.today':'اليوم', 'filter.tomorrow':'غداً', 'filter.currentWeek':'الأسبوع الحالي', 'filter.all':'كل المهام',
+    'status.todo':'لم تبدأ', 'status.inProgress':'جارية', 'status.done':'مكتملة',
+    'group.none':'بلا مجموعة',
+    'modal.newTask':'مهمة جديدة', 'modal.editTask':'تعديل المهمة',
+    'field.title':'العنوان *', 'field.title.ph':'عنوان المهمة', 'field.desc':'الوصف', 'field.desc.ph':'وصف اختياري…',
+    'field.group':'المجموعة', 'field.noGroup':'— بلا مجموعة —', 'field.status':'الحالة', 'field.due':'تاريخ الاستحقاق',
+    'field.progress':'نسبة الإنجاز:', 'btn.done':'تم ✓', 'btn.delete':'حذف', 'btn.close':'إغلاق',
+    'modal.manageGroups':'إدارة المجموعات', 'field.newGroup':'مجموعة جديدة', 'field.newGroup.ph':'مثال: العمل / الدراسة', 'btn.add':'+ إضافة',
+    'ctx.edit':'تعديل', 'ctx.moveTodo':'نقل: لم تبدأ', 'ctx.moveProg':'نقل: جارية', 'ctx.moveDone':'نقل: مكتملة', 'ctx.delete':'حذف',
+    'quick.prog':'🔄 جارية', 'quick.done':'✅ مكتملة', 'quick.todo':'⬜ إلغاء', 'box.empty':'لا توجد مهام',
+    'groups.empty':'لا توجد مجموعات بعد', 'title.delete':'حذف', 'btn.today':'اليوم',
+    'quick.doneToday':'✓ تم اليوم', 'quick.doneToday.active':'✓ تم اليوم ✓',
+    'sb.noGroups':'أضف مجموعات لعرضها', 'sb.manage':'＋ إدارة المجموعات',
+    'main.count':'مهمة', 'boxes.emptyNoGroups':'لا توجد مجموعات مُختارة.\nاختر مجموعة ✓ من القائمة الجانبية لعرض مهامها هنا.',
+    'boxes.emptyNoTasks':'لا توجد مهام مطابقة لهذا العرض.'
+  },
+  en: {
+    'page.title':'Tasks', 'btn.groups':'Groups', 'btn.newTask':'New Task',
+    'sidebar.views':'Views', 'sidebar.groups':'Groups',
+    'filter.today':'Today', 'filter.tomorrow':'Tomorrow', 'filter.currentWeek':'This Week', 'filter.all':'All Tasks',
+    'status.todo':'To Do', 'status.inProgress':'In Progress', 'status.done':'Done',
+    'group.none':'No Group',
+    'modal.newTask':'New Task', 'modal.editTask':'Edit Task',
+    'field.title':'Title *', 'field.title.ph':'Task title', 'field.desc':'Description', 'field.desc.ph':'Optional description…',
+    'field.group':'Group', 'field.noGroup':'— No group —', 'field.status':'Status', 'field.due':'Due Date',
+    'field.progress':'Progress:', 'btn.done':'Done ✓', 'btn.delete':'Delete', 'btn.close':'Close',
+    'modal.manageGroups':'Manage Groups', 'field.newGroup':'New Group', 'field.newGroup.ph':'e.g. Work / Study', 'btn.add':'+ Add',
+    'ctx.edit':'Edit', 'ctx.moveTodo':'Move: To Do', 'ctx.moveProg':'Move: In Progress', 'ctx.moveDone':'Move: Done', 'ctx.delete':'Delete',
+    'quick.prog':'🔄 In Progress', 'quick.done':'✅ Done', 'quick.todo':'⬜ Undo', 'box.empty':'No tasks',
+    'groups.empty':'No groups yet', 'title.delete':'Delete', 'btn.today':'Today',
+    'quick.doneToday':'✓ Done Today', 'quick.doneToday.active':'✓ Done Today ✓',
+    'sb.noGroups':'Add groups to show them', 'sb.manage':'＋ Manage Groups',
+    'main.count':'tasks', 'boxes.emptyNoGroups':'No groups selected.\nCheck a group ✓ in the sidebar to show its tasks here.',
+    'boxes.emptyNoTasks':'No tasks match this view.'
+  }
+};
+let curLang = localStorage.getItem('app-lang') || 'ar';
+function t(key){ return (I18N[curLang] && I18N[curLang][key]) || key; }
+function applyLang(l){
+  curLang = l;
+  document.documentElement.setAttribute('lang', l==='ar'?'ar':'en');
+  document.documentElement.setAttribute('dir', l==='ar'?'rtl':'ltr');
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.getAttribute('data-i18n')); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder = t(el.getAttribute('data-i18n-ph')); });
+  render();
+}
+
+const KEY_T = 'kanban-tasks', KEY_G = 'kanban-groups';
+const KEY_F = 'tasks-filter', KEY_UC = 'tasks-unchecked-groups';
+const NONE = '__none__';
+let editId = null, ctxId = null, editingGroupId = null;
+let curFilter = localStorage.getItem(KEY_F) || 'today';
+if(curFilter==='next_week') curFilter = 'current_week'; // ترقية الاسم القديم
+
+// العروض في القائمة الجانبية
+const VIEWS = [
+  {id:'today',       ico:'📅', key:'filter.today'},
+  {id:'tomorrow',    ico:'📆', key:'filter.tomorrow'},
+  {id:'current_week', ico:'🗓️', key:'filter.currentWeek'},
+  {sep:true},
+  {id:'todo',        ico:'⬜', key:'status.todo'},
+  {id:'in_progress', ico:'🔄', key:'status.inProgress'},
+  {id:'done',        ico:'✅', key:'status.done'},
+  {sep:true},
+  {id:'all',         ico:'📋', key:'filter.all'}
+];
+
+function getTasks(){ return JSON.parse(localStorage.getItem(KEY_T)||'[]'); }
+function getGroups(){ return JSON.parse(localStorage.getItem(KEY_G)||'[]'); }
+function saveTasks(t){ localStorage.setItem(KEY_T, JSON.stringify(t)); }
+function saveGroups(g){ localStorage.setItem(KEY_G, JSON.stringify(g)); }
+function getUnchecked(){ return new Set(JSON.parse(localStorage.getItem(KEY_UC)||'[]')); }
+function saveUnchecked(s){ localStorage.setItem(KEY_UC, JSON.stringify([...s])); }
+// مقارنة المعرّفات كنصوص لضمان التطابق حتى مع بيانات قديمة مخزّنة بأرقام
+const sameId = (a,b)=>String(a)===String(b);
+// تاريخ اليوم بالتوقيت المحلي (تجنّب إزاحة UTC التي تُرجع يوماً خاطئاً في المناطق ذات الفرق الزمني)
+function todayStr(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function setDueToday(){ document.getElementById('m-due').value = todayStr(); liveSaveTask(); }
+
+// ── منطق الفلترة ──
+function dayDiff(dueDate){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(dueDate+'T00:00:00');
+  return Math.round((d - today)/86400000);
+}
+// حدود الأسبوع الحالي (من الأحد إلى السبت) الذي يحتوي اليوم
+function weekBounds(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const offsetToSun = today.getDay(); // الأحد=0 ... السبت=6 → كم يوماً مضى منذ الأحد
+  const start = new Date(today); start.setDate(today.getDate()-offsetToSun);
+  const end = new Date(start); end.setDate(start.getDate()+6);
+  return [start, end];
+}
+function matchesFilter(task, filter){
+  if(filter==='all') return true;
+  if(filter==='todo'||filter==='in_progress'||filter==='done') return task.status===filter;
+  if(!task.dueDate) return false;
+  if(filter==='today')     return dayDiff(task.dueDate)===0;
+  if(filter==='tomorrow')  return dayDiff(task.dueDate)===1;
+  if(filter==='current_week'){
+    const [ws,we] = weekBounds();
+    const d = new Date(task.dueDate+'T00:00:00');
+    return d>=ws && d<=we;
+  }
+  return true;
+}
+
+function setFilter(f){
+  curFilter = f;
+  localStorage.setItem(KEY_F, f);
+  if(window.matchMedia('(max-width:860px)').matches) closeSidebar();
+  render();
+}
+
+// ── القائمة الجانبية ──
+function renderSidebar(tasks, groups){
+  // العروض مع عدّاد لكل عرض
+  const vEl = document.getElementById('sb-views');
+  vEl.innerHTML = VIEWS.map(v=>{
+    if(v.sep) return '<div class="sb-sep"></div>';
+    const c = tasks.filter(t=>matchesFilter(t, v.id)).length;
+    return `<div class="sb-item${curFilter===v.id?' active':''}" onclick="setFilter('${v.id}')">
+      <span class="sb-ico">${v.ico}</span>
+      <span class="sb-label">${t(v.key)}</span>
+      <span class="sb-badge">${c}</span>
+    </div>`;
+  }).join('');
+
+  // المجموعات مع مربعات الاختيار
+  const gEl = document.getElementById('sb-groups');
+  const unchecked = getUnchecked();
+  const filtered = tasks.filter(t=>matchesFilter(t, curFilter));
+  let html = '';
+  groups.forEach(g=>{
+    const on = !unchecked.has(g.id);
+    const c = filtered.filter(t=>t.group===g.id).length;
+    html += `<div class="sb-group${on?' on':''}" onclick="toggleGroupCheck('${g.id}')">
+      <span class="sb-check">${on?'✓':''}</span>
+      <span class="sb-gname">${esc(g.name)}</span>
+      <span class="sb-badge">${c}</span>
+    </div>`;
+  });
+  // بلا مجموعة
+  const onNone = !unchecked.has(NONE);
+  const cNone = filtered.filter(t=>!t.group).length;
+  html += `<div class="sb-group${onNone?' on':''}" onclick="toggleGroupCheck('${NONE}')">
+    <span class="sb-check">${onNone?'✓':''}</span>
+    <span class="sb-gname" style="opacity:.7">${t('group.none')}</span>
+    <span class="sb-badge">${cNone}</span>
+  </div>`;
+  if(!groups.length) html = `<div class="sb-empty">${t('sb.noGroups')}</div>` + html;
+  html += `<button class="sb-mini-btn" onclick="openGroupsManager()">${t('sb.manage')}</button>`;
+  gEl.innerHTML = html;
+}
+
+function toggleGroupCheck(id){
+  const s = getUnchecked();
+  if(s.has(id)) s.delete(id); else s.add(id);
+  saveUnchecked(s);
+  render();
+}
+
+// ── العرض الرئيسي ──
+function render(){
+  const tasks = getTasks().filter(t=>!t.deleted);
+  const groups = getGroups();
+
+  renderSidebar(tasks, groups);
+
+  // عنوان العرض الحالي
+  const view = VIEWS.find(v=>v.id===curFilter);
+  const filtered = tasks.filter(t=>matchesFilter(t, curFilter));
+  document.getElementById('main-title').textContent = view ? t(view.key) : '';
+  document.getElementById('main-count').textContent = filtered.length + ' ' + t('main.count');
+
+  const unchecked = getUnchecked();
+  // المجموعات المُختارة (المفعّلة) فقط تظهر كـ box
+  const boxes = [];
+  groups.forEach(g=>{ if(!unchecked.has(g.id)) boxes.push({id:g.id, name:g.name}); });
+  if(!unchecked.has(NONE)) boxes.push({id:NONE, name:t('group.none'), none:true});
+
+  const el = document.getElementById('boxes');
+
+  if(!boxes.length){
+    el.innerHTML = `<div class="boxes-empty">${esc(t('boxes.emptyNoGroups')).replace(/\n/g,'<br>')}</div>`;
+    return;
+  }
+
+  el.innerHTML = boxes.map(box=>{
+    const boxTasks = filtered
+      .filter(t=> box.none ? !t.group : sameId(t.group,box.id))
+      .sort((a,b)=>(a.order||0)-(b.order||0));
+    const inner = boxTasks.length
+      ? boxTasks.map(t=>taskCardHTML(t)).join('')
+      : `<div class="gbox-empty">${t('box.empty')}</div>`;
+    const dropTarget = box.none ? '' : box.id;
+    return `<div class="gbox" id="gbox-${box.id}"
+        ondragover="event.preventDefault();this.classList.add('drag-over')"
+        ondragleave="this.classList.remove('drag-over')"
+        ondrop="event.preventDefault();this.classList.remove('drag-over');dropOnGroup('${dropTarget}')">
+      <div class="gbox-header">
+        <span class="gbox-dot"${box.none?' style="background:var(--border)"':''}></span>
+        <span class="gbox-title">${esc(box.name)}</span>
+        <span class="gbox-count">${boxTasks.length}</span>
+      </div>
+      <div class="gbox-body">${inner}</div>
+    </div>`;
+  }).join('');
+}
+
+function taskCardHTML(t){
+  const pct = t.progress||0;
+  const today = todayStr();
+  const overdue = t.dueDate && t.dueDate < today && t.status!=='done';
+  const doneToday = (t.doneDates||[]).includes(today);
+  const quickBtns = [
+    t.status!=='in_progress' ? `<button class="quick-btn prog" onclick="event.stopPropagation();quickStatus('${t.id}','in_progress')">${I18N[curLang]['quick.prog']}</button>` : '',
+    t.status!=='done' ? `<button class="quick-btn done" onclick="event.stopPropagation();quickStatus('${t.id}','done')">${I18N[curLang]['quick.done']}</button>` : '',
+    t.status!=='todo' ? `<button class="quick-btn todo" onclick="event.stopPropagation();quickStatus('${t.id}','todo')">${I18N[curLang]['quick.todo']}</button>` : '',
+    `<button class="quick-btn today${doneToday?' active':''}" onclick="event.stopPropagation();toggleDoneToday('${t.id}')">${doneToday?I18N[curLang]['quick.doneToday.active']:I18N[curLang]['quick.doneToday']}</button>`
+  ].filter(Boolean).join('');
+  const L = I18N[curLang];
+  const stName = t.status==='done'?L['status.done']:(t.status==='in_progress'?L['status.inProgress']:L['status.todo']);
+  return `<div class="task-card${t.status==='done'?' done-card':''}" draggable="true"
+      ondragstart="onTaskDragStart(event,'${t.id}')"
+      onclick="openEdit('${t.id}')">
+      <div class="task-top">
+        <div class="task-title${t.status==='done'?' struck':''}">${esc(t.title)}</div>
+        <button class="task-menu-btn" onclick="event.stopPropagation();openCtx('${t.id}',event)">⋮</button>
+      </div>
+      ${t.description?`<div class="task-desc">${esc(t.description)}</div>`:''}
+      <div class="status-badge ${t.status}">${stName}</div>
+      ${t.dueDate?`<div class="task-due${overdue?' overdue':''}">📅 ${t.dueDate}</div>`:''}
+      <div class="progress-row">
+        <div class="progress-bar"><div class="progress-fill${pct>=100?' done':''}" style="width:${pct}%"></div></div>
+        <div class="progress-pct">${pct}%</div>
+      </div>
+      <div class="card-quick-btns">${quickBtns}</div>
+    </div>`;
+}
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── السحب لإعادة إسناد المجموعة ──
+let draggedTaskId = null;
+function onTaskDragStart(e, id){ draggedTaskId = id; e.dataTransfer.effectAllowed='move'; try{ e.dataTransfer.setData('text/plain', id); }catch(err){} }
+function dropOnGroup(groupId){
+  if(!draggedTaskId) return;
+  const tasks = getTasks();
+  const dragged = tasks.find(t=>sameId(t.id,draggedTaskId));
+  draggedTaskId = null;
+  if(!dragged) return;
+  dragged.group = groupId || '';
+  saveTasks(tasks); render();
+}
+
+// ── QUICK STATUS ──
+function quickStatus(id, status){
+  const tasks = getTasks();
+  const t = tasks.find(t=>sameId(t.id,id));
+  if(t){
+    t.status = status;
+    if(status==='done'){ t.progress=100; if(!t.completedAt) t.completedAt=new Date().toISOString(); }
+    if(status==='in_progress' && t.progress===0) t.progress=10;
+    if(status==='todo' && t.progress===100) t.progress=0;
+    saveTasks(tasks); render();
+  }
+}
+
+// إنجاز يومي متكرر منفصل عن الحالة الدائمة (todo/in_progress/done) — مفيد للمهام المتكررة يومياً
+function toggleDoneToday(id){
+  const tasks = getTasks();
+  const t = tasks.find(t=>sameId(t.id,id));
+  if(!t) return;
+  const day = todayStr();
+  t.doneDates = t.doneDates||[];
+  if(t.doneDates.includes(day)) t.doneDates = t.doneDates.filter(d=>d!==day);
+  else t.doneDates.push(day);
+  saveTasks(tasks); render();
+}
+
+// ── TASK MODAL ──
+function openModal(){
+  editId = null;
+  document.getElementById('modal-title').textContent = t('modal.newTask');
+  document.getElementById('m-title').value = '';
+  document.getElementById('m-desc').value = '';
+  // إذا كان العرض الحالي حالة معيّنة، ابدأ بها؛ وإذا كان تاريخاً، عيّن الاستحقاق المناسب
+  document.getElementById('m-status').value = ['todo','in_progress','done'].includes(curFilter) ? curFilter : 'todo';
+  let due = '';
+  if(curFilter==='today') due = todayStr();
+  else if(curFilter==='tomorrow'){ const d=new Date(); d.setDate(d.getDate()+1); due=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+  document.getElementById('m-due').value = due;
+  document.getElementById('m-pct').value = 0;
+  document.getElementById('m-pct-display').textContent = '0%';
+  document.getElementById('m-pct-v').textContent = '0%';
+  document.getElementById('btn-delete').style.display = 'none';
+  populateGroupSelect('m-group', '');
+  document.getElementById('modal-overlay').classList.add('show');
+  setTimeout(()=>document.getElementById('m-title').focus(), 50);
+}
+function openEdit(id){
+  const tk = getTasks().find(x=>sameId(x.id,id));
+  if(!tk) return;
+  editId = id;
+  document.getElementById('modal-title').textContent = t('modal.editTask');
+  document.getElementById('m-title').value = tk.title||'';
+  document.getElementById('m-desc').value = tk.description||'';
+  document.getElementById('m-status').value = tk.status||'todo';
+  document.getElementById('m-due').value = tk.dueDate||'';
+  document.getElementById('m-pct').value = tk.progress||0;
+  document.getElementById('m-pct-display').textContent = (tk.progress||0)+'%';
+  document.getElementById('m-pct-v').textContent = (tk.progress||0)+'%';
+  document.getElementById('btn-delete').style.display = '';
+  populateGroupSelect('m-group', tk.group||'');
+  document.getElementById('modal-overlay').classList.add('show');
+}
+function closeModal(){ document.getElementById('modal-overlay').classList.remove('show'); }
+
+function populateGroupSelect(selId, val){
+  const s = document.getElementById(selId);
+  const groups = getGroups();
+  s.innerHTML = `<option value="">${t('field.noGroup')}</option>`;
+  groups.forEach(g=>{ const o=document.createElement('option'); o.value=g.id; o.textContent=g.name; if(g.id===val) o.selected=true; s.appendChild(o); });
+}
+
+function onPctChange(val){
+  document.getElementById('m-pct-display').textContent = val+'%';
+  document.getElementById('m-pct-v').textContent = val+'%';
+  if(parseInt(val) >= 100) document.getElementById('m-status').value = 'done';
+  else if(parseInt(val) > 0 && document.getElementById('m-status').value === 'todo')
+    document.getElementById('m-status').value = 'in_progress';
+  liveSaveTask();
+}
+
+// يُحفظ كل تغيير فوراً في التخزين المحلي حتى لا يُفقد شيء لم يُضغط له "حفظ"
+function liveSaveTask(){
+  const title = document.getElementById('m-title').value.trim();
+  const pct = parseInt(document.getElementById('m-pct').value)||0;
+  let status = document.getElementById('m-status').value;
+  if(pct >= 100) status = 'done';
+  const fields = {
+    title, description:document.getElementById('m-desc').value.trim(),
+    status, group:document.getElementById('m-group').value,
+    dueDate:document.getElementById('m-due').value||null, progress:pct
+  };
+  const tasks = getTasks();
+  if(editId){
+    const t = tasks.find(t=>sameId(t.id,editId));
+    if(t){ Object.assign(t, fields); if(status==='done'&&!t.completedAt) t.completedAt=new Date().toISOString(); saveTasks(tasks); render(); }
+  } else if(title){
+    // أول حرف يُكتب في العنوان ينشئ المهمة فوراً، وبقية التعديلات تُحفظ على نفس المهمة مباشرة
+    const t = { id:'t'+Date.now(), ...fields, createdAt:new Date().toISOString(), completedAt:status==='done'?new Date().toISOString():null, deleted:false, doneDates:[] };
+    tasks.push(t);
+    editId = t.id;
+    document.getElementById('btn-delete').style.display = '';
+    saveTasks(tasks); render();
+  }
+}
+function deleteTask(){
+  if(!editId) return;
+  const tasks = getTasks();
+  const t = tasks.find(t=>sameId(t.id,editId));
+  if(t) t.deleted = true;
+  saveTasks(tasks); closeModal(); render();
+}
+
+// ── GROUP MANAGER ──
+function openGroupsManager(){
+  renderGroupsList();
+  document.getElementById('g-name').value = '';
+  document.getElementById('group-modal-overlay').classList.add('show');
+  setTimeout(()=>document.getElementById('g-name').focus(), 50);
+}
+function closeGroupModal(){ document.getElementById('group-modal-overlay').classList.remove('show'); editingGroupId=null; render(); }
+
+function renderGroupsList(){
+  const groups = getGroups();
+  const el = document.getElementById('groups-list-ui');
+  if(!groups.length){ el.innerHTML=`<div style="text-align:center;opacity:.4;font-size:13px;padding:12px">${t('groups.empty')}</div>`; return; }
+  el.innerHTML = groups.map(g=>`
+    <div class="group-item" id="gi-${g.id}">
+      ${editingGroupId===g.id
+        ? `<input class="group-edit-input" id="gedit-${g.id}" value="${esc(g.name)}" onkeydown="if(event.key==='Enter')saveGroupEdit('${g.id}')">
+           <button class="group-save-btn" onclick="saveGroupEdit('${g.id}')">✓</button>`
+        : `<span class="group-item-name">${esc(g.name)}</span>
+           <button class="group-edit-btn" onclick="startGroupEdit('${g.id}')">✏️</button>`
+      }
+      <button class="group-del-btn" onclick="deleteGroup('${g.id}')" title="${t('title.delete')}">🗑️</button>
+    </div>
+  `).join('');
+}
+function startGroupEdit(id){ editingGroupId=id; renderGroupsList(); setTimeout(()=>document.getElementById('gedit-'+id)?.focus(),50); }
+function saveGroupEdit(id){
+  const input = document.getElementById('gedit-'+id);
+  const name = input?.value.trim();
+  if(!name) return;
+  const groups = getGroups();
+  const g = groups.find(g=>sameId(g.id,id));
+  if(g){ g.name=name; saveGroups(groups); }
+  editingGroupId=null; renderGroupsList();
+}
+function deleteGroup(id){
+  // تحويل المعرّفات إلى نصوص لضمان تطابقها ونجاح الحذف حتى مع بيانات قديمة مخزّنة بأرقام
+  const groups = getGroups().filter(g => String(g.id) !== String(id));
+  saveGroups(groups);
+
+  const tasks = getTasks();
+  tasks.forEach(t => { if(String(t.group) === String(id)) t.group = ''; });
+  saveTasks(tasks);
+
+  const s = getUnchecked();
+  s.forEach(val => { if(String(val) === String(id)) s.delete(val); });
+  saveUnchecked(s);
+
+  renderGroupsList();
+  render(); // تحديث القائمة الجانبية والشاشة الرئيسية فوراً
+}
+function saveGroup(){
+  const name = document.getElementById('g-name').value.trim();
+  if(!name) return;
+  const groups = getGroups();
+  groups.push({id:'g'+Date.now(), name});
+  saveGroups(groups);
+  document.getElementById('g-name').value = '';
+  renderGroupsList();
+  render(); // المجموعة الجديدة مُختارة افتراضياً وتظهر مباشرة
+}
+
+// ── القائمة الجانبية على الجوال ──
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sb-backdrop').classList.toggle('show');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sb-backdrop').classList.remove('show');
+}
+
+// ── CONTEXT MENU ──
+function openCtx(id, e){
+  ctxId = id;
+  const m = document.getElementById('ctx');
+  m.style.top = e.clientY+'px';
+  m.style.right = (window.innerWidth - e.clientX)+'px';
+  m.classList.add('show');
+  e.stopPropagation();
+}
+function ctxEdit(){ closeCtx(); openEdit(ctxId); }
+function ctxMove(status){
+  const tasks=getTasks(); const t=tasks.find(t=>sameId(t.id,ctxId));
+  if(t){ t.status=status; if(status==='done'){ t.progress=100; if(!t.completedAt) t.completedAt=new Date().toISOString(); } saveTasks(tasks); }
+  closeCtx(); render();
+}
+function ctxDelete(){
+  const tasks=getTasks(); const t=tasks.find(t=>sameId(t.id,ctxId));
+  if(t) t.deleted=true;
+  saveTasks(tasks); closeCtx(); render();
+}
+function closeCtx(){ document.getElementById('ctx').classList.remove('show'); }
+document.addEventListener('click', ()=>closeCtx());
+
+// ── KEYBOARD ──
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeModal(); closeGroupModal(); closeCtx(); closeSidebar(); } });
+
+applyLang(curLang);
+
+// ── السحب من المكان الفارغ لتمرير اللوحة يميناً/يساراً (بالفأرة) ──
+(function(){
+  const board = document.getElementById('boxes');
+  if(!board) return;
+  let down=false, startX=0, startScroll=0;
+  // لا نبدأ السحب فوق البطاقات أو الأزرار حتى لا نعطّل وظائفها
+  const isBlank = el => !el.closest('.task-card, button, input, select, textarea, a, .task-menu-btn');
+  board.addEventListener('mousedown', e=>{
+    if(e.button!==0 || !isBlank(e.target)) return;
+    down=true; startX=e.clientX; startScroll=board.scrollLeft;
+    board.classList.add('panning');
+  });
+  window.addEventListener('mousemove', e=>{
+    if(!down) return;
+    e.preventDefault();
+    board.scrollLeft = startScroll - (e.clientX - startX);
+  });
+  window.addEventListener('mouseup', ()=>{ if(down){ down=false; board.classList.remove('panning'); } });
+})();
+</script>
+<script>
+/* إغلاق النافذة المنبثقة بالضغط خارجها (على الخلفية) بدل زر ✕ */
+(function(){
+  function bind(ov){
+    var down=false;
+    ov.addEventListener('pointerdown',function(e){ down=(e.target===ov); });
+    ov.addEventListener('click',function(e){
+      if(e.target===ov && down){
+        var btn=ov.querySelector('.modal-close, .ch-close');
+        if(btn){ btn.click(); } else { ov.classList.remove('show'); }
+      }
+    });
+  }
+  document.querySelectorAll('.overlay, #checkin-overlay').forEach(bind);
+})();
+</script>
+<script>
+/* أمسك واسحب للتمرير في كل الاتجاهات (بالماوس) — drag-to-scroll */
+(function(){
+  var down=false, moved=false, sx=0, sy=0, elX=null, elY=null, baseL=0, baseT=0;
+  var NODRAG='a,button,input,textarea,select,label,option,[contenteditable="true"],[draggable="true"],.no-drag';
+  function scrollable(el, axis){
+    while(el && el.nodeType===1 && el!==document.body && el!==document.documentElement){
+      var s=getComputedStyle(el), o=(axis==='y'?s.overflowY:s.overflowX);
+      var can=(o==='auto'||o==='scroll'||o==='overlay');
+      var big=(axis==='y'? el.scrollHeight>el.clientHeight+1 : el.scrollWidth>el.clientWidth+1);
+      if(can && big) return el;
+      el=el.parentElement;
+    }
+    return axis==='y' ? (document.scrollingElement||document.documentElement) : null;
+  }
+  addEventListener('pointerdown',function(e){
+    if(e.pointerType && e.pointerType!=='mouse') return;   /* اللمس يمرّر بشكل طبيعي */
+    if(e.button!==0) return;
+    if(e.target.closest && e.target.closest(NODRAG)) return;
+    if(getComputedStyle(e.target).cursor==='text') return;
+    down=true; moved=false; sx=e.clientX; sy=e.clientY;
+    elY=scrollable(e.target,'y'); elX=scrollable(e.target,'x');
+    baseT=elY?elY.scrollTop:0; baseL=elX?elX.scrollLeft:0;
+  },true);
+  addEventListener('pointermove',function(e){
+    if(!down) return;
+    var dx=e.clientX-sx, dy=e.clientY-sy;
+    if(!moved){
+      if(Math.abs(dx)<5 && Math.abs(dy)<5) return;
+      moved=true;
+      document.body.style.cursor='grabbing';
+      document.body.style.userSelect='none';
+    }
+    if(e.cancelable) e.preventDefault();
+    if(elY) elY.scrollTop=baseT-dy;
+    if(elX) elX.scrollLeft=baseL-dx;
+  },{passive:false,capture:true});
+  function end(){
+    if(!down) return;
+    down=false;
+    document.body.style.cursor='';
+    document.body.style.userSelect='';
+    if(moved){                       /* امنع النقرة الناتجة عن السحب */
+      var sup=function(ev){ ev.stopPropagation(); ev.preventDefault(); removeEventListener('click',sup,true); };
+      addEventListener('click',sup,true);
+      setTimeout(function(){ removeEventListener('click',sup,true); },0);
+    }
+  }
+  addEventListener('pointerup',end,true);
+  addEventListener('pointercancel',end,true);
+})();
+</script>
+<script>
+/* حجم الخط الموحّد (font-scale) — يُطبّق إعداد "حجم الخط" من الإعدادات على كل الصفحات.
+   الصفحة العليا فقط تُطبّق zoom؛ الصفحة داخل iframe يُصغّرها تكبير القوقعة تلقائياً. */
+(function(){
+  var M={small:0.85, normal:1, large:1.15};
+  function cur(){ var v=localStorage.getItem('font-scale'); return M[v]?v:'normal'; }
+  function apply(){
+    if(window.top!==window.self) return;            /* مؤطّرة: القوقعة تتكفّل بالتصغير */
+    var s=M[cur()]||1, de=document.documentElement;
+    de.style.zoom=s;
+    /* تعويض الارتفاع حتى لا يظهر فراغ أسفل الشاشة (zoom يتعارض مع 100vh) */
+    de.style.height = s===1 ? '' : (100/s)+'vh';
+    if(document.body) document.body.style.minHeight = s===1 ? '' : (100/s)+'vh';
+  }
+  if(document.body) apply(); else document.addEventListener('DOMContentLoaded',apply);
+  window.addEventListener('storage', function(e){ if(e.key==='font-scale') apply(); });
+})();
+</script>
+</body>
+</html>

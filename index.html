@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>work space</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f6f3;--bg2:#fff;--txt:#1a1a1a;--border:#e5e4df;
+  --blue:#2563eb;--bl:#eff6ff;--bt:#2563eb;
+  --green:#16a34a;--red:#dc2626;--orange:#ea580c;
+  --r:10px;--sh:0 1px 3px rgba(0,0,0,.08);
+  --sw:250px
+}
+[data-theme="dark"]{--bg:#121212;--bg2:#1e1e1e;--txt:#e4e4e7;--border:#27272a;--bl:#1e3a5f;--bt:#60a5fa}
+[data-theme="dim"]{--bg:#0f172a;--bg2:#1e293b;--txt:#f8fafc;--border:#334155;--bl:#1e3a5f;--bt:#7dd3fc}
+html,body{height:100%;overflow:hidden;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif}
+body{display:flex;background:var(--bg);color:var(--txt)}
+
+/* SIDEBAR */
+#sidebar{
+  width:var(--sw);min-height:100vh;background:var(--bg2);
+  border-left:1px solid var(--border);display:flex;flex-direction:column;
+  overflow-y:auto;flex-shrink:0;transition:background .2s,border-color .2s
+}
+.sb-header{padding:18px 14px 12px;border-bottom:1px solid var(--border);position:relative;display:flex;align-items:center;justify-content:center;min-height:56px}
+.app-title{font-size:17px;font-weight:700;color:var(--bt);text-align:center;white-space:nowrap}
+.sb-toggle{
+  position:absolute;inset-inline-start:10px;top:50%;transform:translateY(-50%);
+  width:30px;height:30px;border:1px solid var(--border);border-radius:8px;
+  background:var(--bg);color:var(--txt);cursor:pointer;font-size:15px;line-height:1;
+  display:flex;align-items:center;justify-content:center;transition:background .12s,color .12s;flex-shrink:0
+}
+.sb-toggle:hover{background:var(--bl);color:var(--bt)}
+
+/* ── الوضع المصغّر (أيقونات فقط) ── */
+#sidebar.collapsed{width:66px}
+#sidebar.collapsed .app-title{display:none}
+#sidebar.collapsed .sb-toggle{position:static;transform:none}
+#sidebar.collapsed .nav-a{justify-content:center;gap:0;padding:9px 0;margin:1px 8px}
+#sidebar.collapsed .nav-a span:not(.nav-ic){display:none}
+#sidebar.collapsed .nav-lbl{display:none}
+#sidebar.collapsed .logout-btn span{display:none}
+#sidebar.collapsed .logout-btn{padding:8px 0;font-size:15px}
+#sidebar.collapsed .sb-footer{padding:10px 8px}
+.user-card{
+  padding:8px 10px;background:var(--bg);border-radius:var(--r);
+  display:flex;align-items:center;gap:8px;cursor:pointer;
+  transition:background .15s
+}
+.user-card:hover{opacity:.85}
+.u-avatar{
+  width:32px;height:32px;border-radius:50%;background:var(--blue);
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:14px;flex-shrink:0
+}
+.u-name{font-size:13px;font-weight:600}
+.u-sub{font-size:11px;opacity:.5;margin-top:1px}
+
+.nav-sec{padding:6px 0}
+.nav-lbl{padding:5px 14px;font-size:10.5px;font-weight:700;opacity:.4;letter-spacing:.06em}
+.nav-a{
+  display:flex;align-items:center;gap:9px;padding:8px 14px;
+  font-size:13.5px;font-weight:500;color:var(--txt);opacity:.72;
+  cursor:pointer;border-radius:8px;margin:1px 6px;
+  transition:background .12s,opacity .12s;user-select:none
+}
+.nav-a:hover{background:var(--bg);opacity:1}
+.nav-a.active{background:var(--bl);color:var(--bt);opacity:1;font-weight:600}
+.nav-ic{font-size:15px;width:18px;text-align:center}
+
+.sb-footer{margin-top:auto;padding:10px 8px;border-top:1px solid var(--border)}
+.theme-row{display:flex;gap:3px;background:var(--bg);border-radius:8px;padding:3px;margin-bottom:8px}
+.th-btn{
+  flex:1;padding:5px 2px;border:none;border-radius:6px;
+  font-size:11px;font-weight:500;cursor:pointer;background:transparent;
+  color:var(--txt);opacity:.55;transition:all .12s;font-family:inherit
+}
+.th-btn.active{background:var(--bg2);opacity:1;box-shadow:var(--sh)}
+.logout-btn{
+  width:100%;padding:7px;border:1px solid var(--border);
+  border-radius:8px;background:transparent;color:var(--txt);
+  font-size:12.5px;cursor:pointer;font-family:inherit;transition:background .12s
+}
+.logout-btn:hover{background:var(--bg)}
+
+/* MAIN */
+#main{flex:1;height:100%;overflow:hidden;position:relative}
+#frame{width:100%;height:100%;border:none;background:var(--bg)}
+
+/* TIMER BAR */
+#timer-bar{position:fixed;bottom:0;left:0;right:0;height:3px;z-index:999;background:transparent}
+#timer-progress{height:100%;background:var(--blue);width:0%;transition:width 1s linear}
+
+/* ===== CHECKIN OVERLAY ===== */
+#checkin-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.55);z-index:9999;
+  align-items:center;justify-content:center;backdrop-filter:blur(2px)
+}
+#checkin-overlay.show{display:flex}
+#checkin-box{
+  background:var(--bg2);border-radius:18px;padding:26px;
+  width:430px;max-width:94vw;
+  box-shadow:0 24px 64px rgba(0,0,0,.35);
+  animation:popIn .22s ease
+}
+@keyframes popIn{from{transform:translateY(16px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+.ch-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.ch-title{font-size:16px;font-weight:700}
+.ch-close{
+  width:28px;height:28px;border:none;border-radius:50%;
+  background:var(--bg);cursor:pointer;font-size:15px;
+  color:var(--txt);opacity:.5;display:flex;align-items:center;justify-content:center
+}
+.ch-sub{font-size:12px;opacity:.45;margin-bottom:18px}
+.ch-opts{display:flex;flex-direction:column;gap:9px}
+.ch-opt{
+  display:flex;align-items:center;gap:11px;padding:12px 14px;
+  border:2px solid var(--border);border-radius:12px;background:var(--bg2);
+  cursor:pointer;font-family:inherit;font-size:13.5px;font-weight:500;
+  color:var(--txt);transition:all .14s;text-align:right;width:100%
+}
+.ch-opt:hover,.ch-opt.sel{border-color:var(--blue);background:var(--bl);color:var(--bt)}
+.ch-opt-ic{font-size:19px}
+.ch-opt-info{display:flex;flex-direction:column;align-items:flex-start}
+.ch-opt-lbl{font-weight:600}
+.ch-opt-desc{font-size:11px;opacity:.55;margin-top:1px}
+.ch-form{margin-top:14px;display:none}
+.ch-form.show{display:block}
+.fl{margin-bottom:10px}
+.fl label{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px}
+.fi,.fs,.fta{
+  width:100%;padding:8px 11px;border:1px solid var(--border);
+  border-radius:8px;background:var(--bg);color:var(--txt);
+  font-family:inherit;font-size:13.5px;outline:none;direction:rtl;
+  transition:border-color .12s
+}
+.fi:focus,.fs:focus,.fta:focus{border-color:var(--blue)}
+.fta{min-height:72px;resize:vertical}
+.range-row{display:flex;align-items:center;gap:10px}
+.range-row input[type=range]{flex:1}
+.range-val{font-size:16px;font-weight:700;color:var(--bt);min-width:38px;text-align:center}
+.ch-actions{margin-top:16px;display:flex;gap:7px}
+.btn-p{
+  flex:1;padding:10px;border:none;border-radius:9px;
+  background:var(--blue);color:#fff;font-family:inherit;
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:opacity .12s
+}
+.btn-p:hover{opacity:.88}
+.btn-s{
+  padding:10px 14px;border:1px solid var(--border);border-radius:9px;
+  background:transparent;color:var(--txt);font-family:inherit;
+  font-size:13.5px;cursor:pointer;transition:background .12s
+}
+.btn-s:hover{background:var(--bg)}
+.ch-skip{margin-top:10px;text-align:center}
+.ch-skip button{border:none;background:none;color:var(--txt);opacity:.35;cursor:pointer;font-family:inherit;font-size:12px}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:#111;color:#fff;padding:10px 20px;border-radius:999px;
+  font-size:13px;z-index:99999;opacity:0;pointer-events:none;
+  transition:opacity .25s;white-space:nowrap
+}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<aside id="sidebar">
+  <div class="sb-header">
+    <button class="sb-toggle" id="sb-toggle" onclick="toggleSidebar()" title="تصغير القائمة" aria-label="تصغير القائمة">☰</button>
+    <div class="app-title" data-i18n="app.title"> work space</div>
+  </div>
+
+  <nav class="nav-sec">
+    <div class="nav-a" onclick="nav('المهام.html',this)"><span class="nav-ic">✅</span> <span data-i18n="nav.tasks">Tasks</span></div>
+    <div class="nav-a" onclick="nav('تعقب_العادات.html',this)"><span class="nav-ic">🔥</span> <span data-i18n="nav.habits">Habit Tracker</span></div>
+    <div class="nav-a" onclick="nav('متعقب_المذاكرة.html',this)"><span class="nav-ic">📚</span> <span data-i18n="nav.focus">Focus tracker</span></div>
+    <div class="nav-a" onclick="nav('التقويم.html',this)"><span class="nav-ic">📅</span> <span data-i18n="nav.calendar">Calendar</span></div>
+    <div class="nav-a" onclick="nav('العداد_التنازلي.html',this)"><span class="nav-ic">⏱️</span> <span data-i18n="nav.countdown">Calendar timer</span></div>
+  </nav>
+
+  <nav class="nav-sec">
+    <div class="nav-a" onclick="nav('مذكراتي_المتقدمة.html',this)"><span class="nav-ic">📓</span> <span data-i18n="nav.notes">My Notes</span></div>
+  </nav>
+
+  <div class="sb-footer">
+    <button class="logout-btn" onclick="openSettings()">⚙️ <span data-i18n="btn.settings">الإعدادات</span></button>
+  </div>
+</aside>
+
+<main id="main">
+  <iframe id="frame" title="المحتوى"></iframe>
+</main>
+
+<div id="timer-bar"><div id="timer-progress"></div></div>
+
+<!-- CHECK-IN POPUP -->
+<div id="checkin-overlay">
+  <div id="checkin-box">
+    <div class="ch-header">
+      <div class="ch-title" id="ch-title-el">⏰ What did you do in the last 20 minutes?</div>
+      <button class="ch-close" onclick="skipCheckin()">✕</button>
+    </div>
+    <div class="ch-sub" id="ch-time"></div>
+
+    <div class="ch-opts" id="ch-opts">
+      <button class="ch-opt" onclick="pickOpt('complete',this)">
+        <span class="ch-opt-ic">✅</span>
+        <div class="ch-opt-info">
+          <span class="ch-opt-lbl" data-i18n="ci.opt.complete.lbl">Completed Task</span>
+          <span class="ch-opt-desc" data-i18n="ci.opt.complete.desc">Mark the task as 100% complete</span>
+        </div>
+      </button>
+      <button class="ch-opt" onclick="pickOpt('progress',this)">
+        <span class="ch-opt-ic">📊</span>
+        <div class="ch-opt-info">
+          <span class="ch-opt-lbl" data-i18n="ci.opt.progress.lbl">Update Task Progress</span>
+          <span class="ch-opt-desc" data-i18n="ci.opt.progress.desc">Select a task and enter its completion percentage</span>
+        </div>
+      </button>
+      <button class="ch-opt" onclick="pickOpt('custom',this)">
+        <span class="ch-opt-ic">📝</span>
+        <div class="ch-opt-info">
+          <span class="ch-opt-lbl" data-i18n="ci.opt.custom.lbl">Log Custom Activity</span>
+          <span class="ch-opt-desc" data-i18n="ci.opt.custom.desc">Enter what you did in your own words</span>
+        </div>
+      </button>
+    </div>
+
+    <!-- Form: complete -->
+    <div class="ch-form" id="f-complete">
+      <div class="fl"><label data-i18n="ci.form.selectTask">Select the completed task:</label>
+        <select class="fs" id="sel-complete"><option value="" data-i18n="ci.select">— Select —</option></select>
+      </div>
+      <div class="ch-actions">
+        <button class="btn-p" onclick="saveCI('complete')" data-i18n="ci.save">SAVE ✓</button>
+        <button class="btn-s" onclick="resetForms()" data-i18n="ci.return">RETURN</button>
+      </div>
+    </div>
+
+    <!-- Form: progress -->
+    <div class="ch-form" id="f-progress">
+      <div class="fl"><label data-i18n="ci.form.selectTask2">Select the task:</label>
+        <select class="fs" id="sel-progress"><option value="" data-i18n="ci.select">— Select —</option></select>
+      </div>
+      <div class="fl">
+        <label><span data-i18n="ci.form.pct">نسبة الإنجاز:</span> <span id="pct-display">50%</span></label>
+        <div class="range-row">
+          <input type="range" min="0" max="100" value="50" id="pct-range"
+            oninput="document.getElementById('pct-display').textContent=this.value+'%'">
+          <span class="range-val" id="pct-display2"></span>
+        </div>
+      </div>
+      <div class="ch-actions">
+        <button class="btn-p" onclick="saveCI('progress')" data-i18n="ci.save">SAVE ✓</button>
+        <button class="btn-s" onclick="resetForms()" data-i18n="ci.return">RETURN</button>
+      </div>
+    </div>
+
+    <!-- Form: custom -->
+    <div class="ch-form" id="f-custom">
+      <div class="fl"><label data-i18n="ci.form.custom">What did you do?</label>
+        <textarea class="fta" id="custom-txt" placeholder="اكتب ما فعلته…" data-i18n-ph="ci.form.customPh"></textarea>
+      </div>
+      <div class="ch-actions">
+        <button class="btn-p" onclick="saveCI('custom')" data-i18n="ci.save">SAVE ✓</button>
+        <button class="btn-s" onclick="resetForms()" data-i18n="ci.return">RETURN</button>
+      </div>
+    </div>
+
+    <div class="ch-skip">
+      <button onclick="skipCheckin()" data-i18n="ci.skip">SKIP</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settings-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(2px)">
+  <div style="background:var(--bg2);border-radius:18px;padding:26px;width:400px;max-width:94vw;box-shadow:0 24px 64px rgba(0,0,0,.35)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div style="font-size:16px;font-weight:700" data-i18n="settings.title">⚙️ الإعدادات</div>
+      <button onclick="closeSettings()" style="width:28px;height:28px;border:none;border-radius:50%;background:var(--bg);cursor:pointer;font-size:15px;color:var(--txt);opacity:.5">✕</button>
+    </div>
+    <div style="font-size:12px;opacity:.45;margin-bottom:18px" data-i18n="settings.sub">خصّص تجربتك في التطبيق</div>
+
+    <div class="user-card" onclick="goToLogin()" style="margin-bottom:20px">
+      <div class="u-avatar" id="uav">؟</div>
+      <div>
+        <div class="u-name" id="uname">Not Registered</div>
+        <div class="u-sub" id="uemail">click to login</div>
+      </div>
+    </div>
+
+    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:10px" data-i18n="settings.checkinInterval">تذكير "ماذا فعلت خلال آخر..." كل:</label>
+    <div id="interval-section" style="transition:opacity .15s">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px">
+        <input type="range" id="interval-slider" min="0" max="3" step="1" value="1" oninput="onIntervalSliderChange()" style="flex:1;accent-color:var(--blue)">
+        <span id="interval-value-label" style="font-size:13.5px;font-weight:700;color:var(--bt);min-width:78px;text-align:center">20 دقيقة</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10.5px;opacity:.4;padding:0 2px;margin-bottom:12px">
+        <span data-i18n="settings.tick15">15 د</span><span data-i18n="settings.tick20">20 د</span><span data-i18n="settings.tick30">30 د</span><span data-i18n="settings.tick60">ساعة</span>
+      </div>
+    </div>
+    <button id="checkin-toggle" class="logout-btn" onclick="toggleCheckin()" style="margin-bottom:22px">🔕 إيقاف التذكير</button>
+
+    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:10px" data-i18n="settings.language">اللغة</label>
+    <div class="theme-row" style="margin-bottom:18px">
+      <button class="th-btn" id="lang-ar" onclick="setLang('ar')">العربية</button>
+      <button class="th-btn" id="lang-en" onclick="setLang('en')">English</button>
+    </div>
+
+    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:10px" data-i18n="settings.theme">المظهر</label>
+    <div class="theme-row" style="margin-bottom:22px">
+      <button class="th-btn" id="th-light" onclick="setTheme('light')" data-i18n="theme.light">☀️ light</button>
+      <button class="th-btn" id="th-dark" onclick="setTheme('dark')" data-i18n="theme.dark">🌙 dark</button>
+      <button class="th-btn" id="th-dim" onclick="setTheme('dim')" data-i18n="theme.dim">🌆 dim</button>
+    </div>
+
+    <label style="display:block;font-size:12.5px;font-weight:600;margin-bottom:10px" data-i18n="settings.fontSize">حجم الخط</label>
+    <div class="theme-row" style="margin-bottom:22px">
+      <button class="th-btn fsz-btn" id="fs-small" onclick="setFontScale('small')" data-i18n="fontSize.small">أ صغير</button>
+      <button class="th-btn fsz-btn" id="fs-normal" onclick="setFontScale('normal')" data-i18n="fontSize.normal">أ عادي</button>
+      <button class="th-btn fsz-btn" id="fs-large" onclick="setFontScale('large')" data-i18n="fontSize.large">أ كبير</button>
+    </div>
+
+    <button class="logout-btn" onclick="doLogout()" data-i18n="btn.logout" style="margin-bottom:8px">تسجيل الخروج</button>
+    <button onclick="closeSettings()" style="width:100%;padding:10px;border:none;border-radius:9px;background:var(--blue);color:#fff;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer" data-i18n="btn.done">تم ✓</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CHECKIN_OPTIONS = [15, 20, 30, 60]; // minutes
+const FONT_SCALES = { small: 0.85, normal: 1, large: 1.15 }; // معامل حجم الخط
+function getCheckinIntervalMinutes(){
+  const saved = parseInt(localStorage.getItem('checkin-interval-minutes'));
+  return CHECKIN_OPTIONS.includes(saved) ? saved : 20;
+}
+function isCheckinEnabled(){ return localStorage.getItem('checkin-enabled') !== '0'; }
+let INTERVAL = getCheckinIntervalMinutes() * 60 * 1000;
+const NO_POPUP = ['تسجيل_الدخول.html','إنشاء_حساب.html'];
+let curPage = '', curTimer = null, progInt = null;
+
+// ── اللغة (عربي/إنجليزي بالكامل) ──
+const I18N = {
+  ar: {
+    'app.title': ' مساحة العمل',
+    'sec.productivity': 'الإنتاجية', 'sec.focus': 'التركيز', 'sec.nutrition': 'التغذية', 'sec.knowledge': 'المعرفة',
+    'nav.tasks': 'المهام', 'nav.habits': 'تتبع العادات', 'nav.calendar': 'التقويم', 'nav.dayEval': 'تقييم اليوم',
+    'nav.focus': 'متعقب المذاكرة', 'nav.countdown': 'العداد التنازلي', 'nav.exercise': 'متتبع التمارين', 'nav.exerciseLibrary': 'مكتبة التمارين',
+    'nav.weight': 'الوزن والسعرات', 'nav.meals': 'الوجبات',
+    'nav.books': 'مكتبة الكتب', 'nav.notes': 'ملاحظاتي',
+    'theme.light': '☀️ فاتح', 'theme.dark': '🌙 داكن', 'theme.dim': '🌆 خافت',
+    'btn.logout': 'تسجيل الخروج', 'user.notRegistered': 'غير مسجل', 'user.clickToLogin': 'انقر للدخول',
+    'btn.settings': 'الإعدادات', 'settings.title': '⚙️ الإعدادات', 'settings.sub': 'خصّص تجربتك في التطبيق',
+    'settings.checkinInterval': 'تذكير "ماذا فعلت خلال آخر..." كل:',
+    'settings.language': 'اللغة', 'settings.theme': 'المظهر',
+    'settings.fontSize': 'حجم الخط', 'fontSize.small': 'أ صغير', 'fontSize.normal': 'أ عادي', 'fontSize.large': 'أ كبير',
+    'settings.disableReminder': '🔕 إيقاف التذكير', 'settings.enableReminder': '🔔 تفعيل التذكير', 'settings.reminderOff': 'مُوقّف',
+    'settings.tick15': '15 د', 'settings.tick20': '20 د', 'settings.tick30': '30 د', 'settings.tick60': 'ساعة',
+    'settings.minutesUnit': 'دقيقة', 'settings.hourUnit': 'ساعة',
+    'ci.title.tpl': '⏰ ماذا فعلت خلال آخر {n} دقيقة؟', 'ci.title.hour': '⏰ ماذا فعلت خلال الساعة الماضية؟',
+    'ci.opt.complete.lbl': 'مهمة مكتملة', 'ci.opt.complete.desc': 'وضع علامة إنجاز 100% على المهمة',
+    'ci.opt.progress.lbl': 'تحديث نسبة إنجاز مهمة', 'ci.opt.progress.desc': 'اختر مهمة وأدخل نسبة إنجازها',
+    'ci.opt.book.lbl': 'قراءة كتاب', 'ci.opt.book.desc': 'سجّل جلسة قراءة مع الصفحة',
+    'ci.opt.custom.lbl': 'تسجيل نشاط مخصص', 'ci.opt.custom.desc': 'اكتب ما فعلته بكلماتك',
+    'ci.form.selectTask': 'اختر المهمة المكتملة:', 'ci.form.selectTask2': 'اختر المهمة:', 'ci.form.pct': 'نسبة الإنجاز:',
+    'ci.form.book': 'الكتاب:', 'ci.form.page': 'الصفحة الحالية (اختياري):',
+    'ci.form.custom': 'ماذا فعلت؟', 'ci.form.customPh': 'اكتب ما فعلته…',
+    'ci.select': '— اختر —', 'ci.selectBook': '— اختر كتاباً —', 'ci.selectTaskOpt': '— اختر مهمة —',
+    'ci.save': 'حفظ ✓', 'ci.return': 'رجوع', 'ci.skip': 'تخطي',
+    'toast.pickTask': 'اختر مهمة أولاً', 'toast.pickBook': 'اختر كتاباً أولاً',
+    'toast.writeSomething': 'اكتب ما فعلته أولاً', 'toast.saved': 'تم الحفظ ✓', 'btn.done': 'تم ✓'
+  },
+  en: {
+    'app.title': ' work space',
+    'sec.productivity': 'Productivity', 'sec.focus': 'Focus', 'sec.nutrition': 'Nutrition', 'sec.knowledge': 'Knowledge',
+    'nav.tasks': 'Tasks', 'nav.habits': 'Habit Tracker', 'nav.calendar': 'Calendar', 'nav.dayEval': 'Day Evaluation',
+    'nav.focus': 'Focus tracker', 'nav.countdown': 'Calendar timer', 'nav.exercise': 'Exercise tracker', 'nav.exerciseLibrary': 'Exercise Library',
+    'nav.weight': 'Weight & Calories', 'nav.meals': 'Meals',
+    'nav.books': 'Book Library', 'nav.notes': 'My Notes',
+    'theme.light': '☀️ light', 'theme.dark': '🌙 dark', 'theme.dim': '🌆 dim',
+    'btn.logout': 'Log out', 'user.notRegistered': 'Not Registered', 'user.clickToLogin': 'click to login',
+    'btn.settings': 'Settings', 'settings.title': '⚙️ Settings', 'settings.sub': 'Customize your experience',
+    'settings.checkinInterval': 'Remind me "what did you do" every:',
+    'settings.language': 'Language', 'settings.theme': 'Theme',
+    'settings.fontSize': 'Font size', 'fontSize.small': 'A Small', 'fontSize.normal': 'A Normal', 'fontSize.large': 'A Large',
+    'settings.disableReminder': '🔕 Turn off reminder', 'settings.enableReminder': '🔔 Turn on reminder', 'settings.reminderOff': 'Off',
+    'settings.tick15': '15 min', 'settings.tick20': '20 min', 'settings.tick30': '30 min', 'settings.tick60': '1 hour',
+    'settings.minutesUnit': 'minutes', 'settings.hourUnit': 'hour',
+    'ci.title.tpl': '⏰ What did you do in the last {n} minutes?', 'ci.title.hour': '⏰ What did you do in the last hour?',
+    'ci.opt.complete.lbl': 'Completed Task', 'ci.opt.complete.desc': 'Mark the task as 100% complete',
+    'ci.opt.progress.lbl': 'Update Task Progress', 'ci.opt.progress.desc': 'Select a task and enter its completion percentage',
+    'ci.opt.book.lbl': 'Read a Book', 'ci.opt.book.desc': 'Log a reading session with the page',
+    'ci.opt.custom.lbl': 'Log Custom Activity', 'ci.opt.custom.desc': 'Enter what you did in your own words',
+    'ci.form.selectTask': 'Select the completed task:', 'ci.form.selectTask2': 'Select the task:', 'ci.form.pct': 'Progress:',
+    'ci.form.book': 'Book:', 'ci.form.page': 'Current Page (Optional):',
+    'ci.form.custom': 'What did you do?', 'ci.form.customPh': 'Write what you did…',
+    'ci.select': '— Select —', 'ci.selectBook': '— Select a book —', 'ci.selectTaskOpt': '— Select a task —',
+    'ci.save': 'SAVE ✓', 'ci.return': 'RETURN', 'ci.skip': 'SKIP',
+    'toast.pickTask': 'Pick a task first', 'toast.pickBook': 'Pick a book first',
+    'toast.writeSomething': 'Write what you did first', 'toast.saved': 'Saved ✓', 'btn.done': 'Done ✓'
+  }
+};
+let curLang = localStorage.getItem('app-lang') || 'ar';
+function t(key){ return (I18N[curLang] && I18N[curLang][key]) || key; }
+function setLang(l){
+  localStorage.setItem('app-lang', l);
+  applyLang(l);
+  sendToFrame({type:'change-lang', lang:l});
+}
+function applyLang(l){
+  curLang = l;
+  document.documentElement.setAttribute('lang', l==='ar'?'ar':'en');
+  document.documentElement.setAttribute('dir', l==='ar'?'rtl':'ltr');
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.getAttribute('data-i18n')); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder = t(el.getAttribute('data-i18n-ph')); });
+  const arBtn = document.getElementById('lang-ar'), enBtn = document.getElementById('lang-en');
+  if(arBtn && enBtn){ arBtn.classList.toggle('active', l==='ar'); enBtn.classList.toggle('active', l==='en'); }
+  // تلميح على كل عنصر (يظهر اسمه عند تمرير المؤشر في الوضع المصغّر)
+  document.querySelectorAll('.nav-a').forEach(a=>{ const lbl=a.querySelector('span:not(.nav-ic)'); if(lbl) a.title=lbl.textContent.trim(); });
+  updateUser();
+  updateCheckinTitle();
+  updateCheckinToggleUI();
+  if(document.getElementById('checkin-overlay').classList.contains('show')){
+    loadTasksIntoSelects();
+  }
+}
+
+// ── الإعدادات (مدة تذكير "ماذا فعلت") ──
+function updateCheckinTitle(){
+  const mins = getCheckinIntervalMinutes();
+  document.getElementById('ch-title-el').textContent = mins===60 ? t('ci.title.hour') : t('ci.title.tpl').replace('{n}', mins);
+}
+function openSettings(){
+  const mins = getCheckinIntervalMinutes();
+  const idx = CHECKIN_OPTIONS.indexOf(mins);
+  document.getElementById('interval-slider').value = idx>=0 ? idx : 1;
+  updateIntervalLabel();
+  updateCheckinToggleUI();
+  document.getElementById('settings-overlay').style.display = 'flex';
+}
+function closeSettings(){
+  document.getElementById('settings-overlay').style.display = 'none';
+}
+function updateIntervalLabel(){
+  const label = document.getElementById('interval-value-label');
+  if(!isCheckinEnabled()){ label.textContent = t('settings.reminderOff'); return; }
+  const idx = parseInt(document.getElementById('interval-slider').value);
+  const mins = CHECKIN_OPTIONS[idx];
+  label.textContent = mins===60 ? t('settings.hourUnit') : (mins+' '+t('settings.minutesUnit'));
+}
+function updateCheckinToggleUI(){
+  const on = isCheckinEnabled();
+  const btn = document.getElementById('checkin-toggle');
+  if(btn) btn.textContent = on ? t('settings.disableReminder') : t('settings.enableReminder');
+  const sec = document.getElementById('interval-section');
+  const slider = document.getElementById('interval-slider');
+  if(sec){ sec.style.opacity = on ? '1' : '.4'; sec.style.pointerEvents = on ? 'auto' : 'none'; }
+  if(slider) slider.disabled = !on;
+  updateIntervalLabel();
+}
+function toggleCheckin(){
+  const on = !isCheckinEnabled();
+  localStorage.setItem('checkin-enabled', on ? '1' : '0');
+  updateCheckinToggleUI();
+  if(on){
+    scheduleNext(); // إعادة تشغيل التذكير من الآن
+  } else {
+    clearTimeout(curTimer);
+    clearInterval(progInt);
+    document.getElementById('timer-progress').style.width = '0%';
+  }
+}
+function onIntervalSliderChange(){
+  const idx = parseInt(document.getElementById('interval-slider').value);
+  const mins = CHECKIN_OPTIONS[idx];
+  localStorage.setItem('checkin-interval-minutes', mins);
+  updateIntervalLabel();
+  updateCheckinTitle();
+  INTERVAL = mins * 60 * 1000;
+  scheduleNext(); // إعادة بدء العدّ التنازلي من الآن بالمدة الجديدة
+}
+
+// ── INIT ──
+(function init(){
+  applyTheme(localStorage.getItem('app-theme')||'light');
+  applyFontScale(getFontScale());
+  applySidebarState();
+  applyLang(curLang);
+  nav('المهام.html', document.querySelector('.nav-a'));
+  startTimerSystem();
+  checkDailyTaskCleanup();
+  setInterval(checkDailyTaskCleanup, 60*1000);
+})();
+
+// ── حذف المهام المكتملة تلقائياً كل يوم الساعة 6 صباحاً ──
+function checkDailyTaskCleanup(){
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  const lastRun = localStorage.getItem('last-task-cleanup');
+  if(now.getHours() < 6 || lastRun === todayStr) return;
+  const tasks = JSON.parse(localStorage.getItem('kanban-tasks')||'[]');
+  const remaining = tasks.filter(t=>t.status!=='done');
+  if(remaining.length !== tasks.length){
+    localStorage.setItem('kanban-tasks', JSON.stringify(remaining));
+    sendToFrame({type:'tasks-cleaned'});
+  }
+  localStorage.setItem('last-task-cleanup', todayStr);
+}
+
+// ── THEME ──
+function setTheme(t){
+  localStorage.setItem('app-theme', t);
+  applyTheme(t);
+  sendToFrame({type:'change-theme', theme:t});
+}
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme', t);
+  document.querySelectorAll('#th-light,#th-dark,#th-dim').forEach(b=>b.classList.remove('active'));
+  const el = document.getElementById('th-'+t);
+  if(el) el.classList.add('active');
+}
+
+// ── حجم الخط (يُصغّر/يُكبّر كامل الواجهة بما فيها الصفحة المفتوحة) ──
+function getFontScale(){
+  const v = localStorage.getItem('font-scale');
+  return FONT_SCALES[v] ? v : 'normal';
+}
+function setFontScale(v){
+  if(!FONT_SCALES[v]) v = 'normal';
+  localStorage.setItem('font-scale', v);
+  applyFontScale(v);
+}
+function applyFontScale(v){
+  const s = FONT_SCALES[v] || 1;
+  const de = document.documentElement;
+  de.style.zoom = s; // القوقعة تُصغّر الـ iframe معها
+  // تعويض الارتفاع حتى لا يظهر فراغ أسفل الشاشة (zoom يتعارض مع 100vh)
+  de.style.height = s === 1 ? '' : (100 / s) + 'vh';
+  ['small','normal','large'].forEach(k=>{
+    const b = document.getElementById('fs-'+k);
+    if(b) b.classList.toggle('active', k===v);
+  });
+}
+
+// ── تصغير/توسيع الشريط الجانبي ──
+function toggleSidebar(){
+  const sb = document.getElementById('sidebar');
+  const collapsed = sb.classList.toggle('collapsed');
+  localStorage.setItem('sidebar-collapsed', collapsed ? '1' : '0');
+  const btn = document.getElementById('sb-toggle');
+  if(btn) btn.title = collapsed ? (curLang==='ar'?'توسيع القائمة':'Expand menu') : (curLang==='ar'?'تصغير القائمة':'Collapse menu');
+}
+function applySidebarState(){
+  if(localStorage.getItem('sidebar-collapsed')==='1') document.getElementById('sidebar').classList.add('collapsed');
+}
+
+// ── NAV ──
+function nav(page, el){
+  curPage = page;
+  const frame = document.getElementById('frame');
+  frame.src = page;
+  document.querySelectorAll('.nav-a').forEach(a=>a.classList.remove('active'));
+  if(el) el.classList.add('active');
+  frame.onload = ()=>{
+    sendToFrame({type:'change-theme',theme:localStorage.getItem('app-theme')||'light'});
+    sendToFrame({type:'change-lang',lang:curLang});
+  };
+}
+function sendToFrame(msg){
+  try{ document.getElementById('frame').contentWindow.postMessage(msg,'*'); }catch(e){}
+}
+function goToLogin(){
+  if(!localStorage.getItem('userAccount')) nav('تسجيل_الدخول.html',null);
+}
+function doLogout(){
+  localStorage.removeItem('userAccount'); updateUser(); nav('تسجيل_الدخول.html',null);
+}
+
+// ── USER ──
+function updateUser(){
+  const acc = JSON.parse(localStorage.getItem('userAccount')||'null');
+  document.getElementById('uname').textContent = acc ? acc.name||'مستخدم' : t('user.notRegistered');
+  document.getElementById('uemail').textContent = acc ? acc.email||'' : t('user.clickToLogin');
+  document.getElementById('uav').textContent = acc ? (acc.name||'م')[0] : '؟';
+}
+
+// ── TIMER SYSTEM ──
+function startTimerSystem(){
+  if(!isCheckinEnabled()){
+    clearTimeout(curTimer); clearInterval(progInt);
+    document.getElementById('timer-progress').style.width = '0%';
+    return;
+  }
+  const last = parseInt(localStorage.getItem('last-checkin-time')||'0');
+  const elapsed = Date.now() - last;
+  const remaining = Math.max(0, INTERVAL - elapsed);
+  startProgressBar(remaining);
+  clearTimeout(curTimer);
+  curTimer = setTimeout(()=>{ showPopup(); }, remaining);
+}
+function scheduleNext(){
+  if(!isCheckinEnabled()){
+    clearTimeout(curTimer); clearInterval(progInt);
+    document.getElementById('timer-progress').style.width = '0%';
+    return;
+  }
+  localStorage.setItem('last-checkin-time', Date.now().toString());
+  startProgressBar(INTERVAL);
+  clearTimeout(curTimer);
+  curTimer = setTimeout(()=>{ showPopup(); scheduleNext(); }, INTERVAL);
+}
+function startProgressBar(remaining){
+  clearInterval(progInt);
+  const bar = document.getElementById('timer-progress');
+  const start = Date.now();
+  const startPct = ((INTERVAL - remaining) / INTERVAL) * 100;
+  bar.style.width = startPct + '%';
+  progInt = setInterval(()=>{
+    const e = Date.now() - start;
+    const pct = Math.min(100, startPct + (e/INTERVAL)*100);
+    bar.style.width = pct + '%';
+    if(pct >= 100) clearInterval(progInt);
+  }, 1000);
+}
+
+// ── POPUP ──
+function showPopup(){
+  if(NO_POPUP.includes(curPage)){ saveRec({id:'c'+Date.now(),timestamp:new Date().toISOString(),type:'skipped'}); scheduleNext(); return; }
+  updateCheckinTitle();
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString(curLang==='ar'?'ar':'en-US',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('ch-time').textContent = curLang==='ar' ? ('الساعة ' + timeStr) : timeStr;
+  loadTasksIntoSelects();
+  resetForms();
+  document.getElementById('checkin-overlay').classList.add('show');
+}
+function loadTasksIntoSelects(){
+  const tasks = (JSON.parse(localStorage.getItem('kanban-tasks')||'[]'))
+    .filter(t=>t.status!=='done' && !t.deleted);
+  ['sel-complete','sel-progress'].forEach(id=>{
+    const s = document.getElementById(id);
+    s.innerHTML = `<option value="">${t('ci.selectTaskOpt')}</option>`;
+    tasks.forEach(tk=>{ const o=document.createElement('option'); o.value=tk.id; o.textContent=tk.title; s.appendChild(o); });
+  });
+}
+function pickOpt(type, btn){
+  document.querySelectorAll('.ch-opt').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  document.querySelectorAll('.ch-form').forEach(f=>f.classList.remove('show'));
+  document.getElementById('f-'+type).classList.add('show');
+}
+function resetForms(){
+  document.querySelectorAll('.ch-opt').forEach(b=>b.classList.remove('sel'));
+  document.querySelectorAll('.ch-form').forEach(f=>f.classList.remove('show'));
+  document.getElementById('custom-txt').value = '';
+  document.getElementById('pct-range').value = 50;
+  document.getElementById('pct-display').textContent = '50%';
+}
+function skipCheckin(){
+  saveRec({id:'c'+Date.now(),timestamp:new Date().toISOString(),type:'skipped'});
+  closePopup();
+}
+function closePopup(){
+  document.getElementById('checkin-overlay').classList.remove('show');
+  scheduleNext();
+}
+function saveRec(rec){
+  const list = JSON.parse(localStorage.getItem('daily-checkins')||'[]');
+  list.push(rec); localStorage.setItem('daily-checkins',JSON.stringify(list));
+}
+
+function saveCI(type){
+  const rec = {id:'c'+Date.now(), timestamp:new Date().toISOString(), type:'', taskId:null, taskTitle:null, progress:null, note:null};
+
+  if(type==='complete'){
+    const s = document.getElementById('sel-complete');
+    if(!s.value){ showToast(t('toast.pickTask')); return; }
+    rec.type='task_completed'; rec.taskId=s.value;
+    rec.taskTitle=s.options[s.selectedIndex].text;
+    updateTask(s.value,{status:'done',progress:100,completedAt:new Date().toISOString()});
+
+  } else if(type==='progress'){
+    const s = document.getElementById('sel-progress');
+    const pct = parseInt(document.getElementById('pct-range').value);
+    if(!s.value){ showToast(t('toast.pickTask')); return; }
+    rec.type='task_progress'; rec.taskId=s.value;
+    rec.taskTitle=s.options[s.selectedIndex].text; rec.progress=pct;
+    const upd = {progress:pct};
+    if(pct===100){ upd.status='done'; upd.completedAt=new Date().toISOString(); }
+    else if(pct>0) upd.status='in_progress';
+    updateTask(s.value, upd);
+
+  } else if(type==='custom'){
+    const txt = document.getElementById('custom-txt').value.trim();
+    if(!txt){ showToast(t('toast.writeSomething')); return; }
+    rec.type='custom_activity'; rec.note=txt;
+  }
+
+  saveRec(rec);
+  showToast(t('toast.saved'));
+  closePopup();
+}
+
+function updateTask(id, fields){
+  const tasks = JSON.parse(localStorage.getItem('kanban-tasks')||'[]');
+  const t = tasks.find(t=>t.id===id);
+  if(t){ Object.assign(t,fields); localStorage.setItem('kanban-tasks',JSON.stringify(tasks)); }
+}
+// ── TOAST ──
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// Listen from iframes
+window.addEventListener('message',e=>{
+  if(e.data?.type==='login-success'){ updateUser(); nav('المهام.html',document.querySelector('.nav-a')); }
+  if(e.data?.type==='goto') nav(e.data.page, null);
+});
+</script>
+<script>
+/* إغلاق النافذة المنبثقة بالضغط خارجها (على الخلفية) بدل زر ✕ */
+(function(){
+  function bind(ov){
+    var down=false;
+    ov.addEventListener('pointerdown',function(e){ down=(e.target===ov); });
+    ov.addEventListener('click',function(e){
+      if(e.target===ov && down){
+        var btn=ov.querySelector('.modal-close, .ch-close');
+        if(btn){ btn.click(); } else { ov.classList.remove('show'); }
+      }
+    });
+  }
+  document.querySelectorAll('.overlay, #checkin-overlay').forEach(bind);
+})();
+</script>
+<script>
+/* أمسك واسحب للتمرير في كل الاتجاهات (بالماوس) — drag-to-scroll */
+(function(){
+  var down=false, moved=false, sx=0, sy=0, elX=null, elY=null, baseL=0, baseT=0;
+  var NODRAG='a,button,input,textarea,select,label,option,[contenteditable="true"],[draggable="true"],.no-drag';
+  function scrollable(el, axis){
+    while(el && el.nodeType===1 && el!==document.body && el!==document.documentElement){
+      var s=getComputedStyle(el), o=(axis==='y'?s.overflowY:s.overflowX);
+      var can=(o==='auto'||o==='scroll'||o==='overlay');
+      var big=(axis==='y'? el.scrollHeight>el.clientHeight+1 : el.scrollWidth>el.clientWidth+1);
+      if(can && big) return el;
+      el=el.parentElement;
+    }
+    return axis==='y' ? (document.scrollingElement||document.documentElement) : null;
+  }
+  addEventListener('pointerdown',function(e){
+    if(e.pointerType && e.pointerType!=='mouse') return;   /* اللمس يمرّر بشكل طبيعي */
+    if(e.button!==0) return;
+    if(e.target.closest && e.target.closest(NODRAG)) return;
+    if(getComputedStyle(e.target).cursor==='text') return;
+    down=true; moved=false; sx=e.clientX; sy=e.clientY;
+    elY=scrollable(e.target,'y'); elX=scrollable(e.target,'x');
+    baseT=elY?elY.scrollTop:0; baseL=elX?elX.scrollLeft:0;
+  },true);
+  addEventListener('pointermove',function(e){
+    if(!down) return;
+    var dx=e.clientX-sx, dy=e.clientY-sy;
+    if(!moved){
+      if(Math.abs(dx)<5 && Math.abs(dy)<5) return;
+      moved=true;
+      document.body.style.cursor='grabbing';
+      document.body.style.userSelect='none';
+    }
+    if(e.cancelable) e.preventDefault();
+    if(elY) elY.scrollTop=baseT-dy;
+    if(elX) elX.scrollLeft=baseL-dx;
+  },{passive:false,capture:true});
+  function end(){
+    if(!down) return;
+    down=false;
+    document.body.style.cursor='';
+    document.body.style.userSelect='';
+    if(moved){                       /* امنع النقرة الناتجة عن السحب */
+      var sup=function(ev){ ev.stopPropagation(); ev.preventDefault(); removeEventListener('click',sup,true); };
+      addEventListener('click',sup,true);
+      setTimeout(function(){ removeEventListener('click',sup,true); },0);
+    }
+  }
+  addEventListener('pointerup',end,true);
+  addEventListener('pointercancel',end,true);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>التقويم</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f7f6f3;--bg2:#fff;--txt:#1a1a1a;--border:#e5e4df;--blue:#2563eb;--bl:#eff6ff;--bt:#2563eb;--green:#16a34a;--gl:#f0fdf4;--gt:#16a34a;--orange:#ea580c;--ol:#fff7ed;--ot:#ea580c;--purple:#7c3aed;--pl:#f5f3ff;--pt:#7c3aed;--r:10px;--sh:0 1px 3px rgba(0,0,0,.08)}
+[data-theme="dark"]{--bg:#121212;--bg2:#1e1e1e;--txt:#e4e4e7;--border:#27272a;--bl:#1e3a5f;--bt:#60a5fa;--gl:#14532d;--gt:#4ade80;--ol:#431407;--ot:#fb923c;--pl:#2e1065;--pt:#a78bfa}
+[data-theme="dim"]{--bg:#0f172a;--bg2:#1e293b;--txt:#f8fafc;--border:#334155;--bl:#1e3a5f;--bt:#7dd3fc;--gl:#14532d;--gt:#4ade80;--ol:#431407;--ot:#fb923c;--pl:#2e1065;--pt:#a78bfa}
+html,body{min-height:100vh;font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;background:var(--bg);color:var(--txt)}
+.layout{display:grid;grid-template-columns:1fr 300px;gap:0;height:100vh}
+.main-col{padding:20px 24px;border-left:1px solid var(--border);display:flex;flex-direction:column;min-height:0;overflow-y:auto}
+.side-col{padding:20px 16px;overflow-y:auto}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.page-title{font-size:20px;font-weight:700}
+.nav-row{display:flex;align-items:center;gap:10px}
+.nav-btn{border:1px solid var(--border);background:var(--bg2);border-radius:8px;padding:6px 12px;cursor:pointer;font-family:inherit;font-size:13px;color:var(--txt);transition:background .12s}
+.nav-btn:hover{background:var(--bg)}
+.cur-month{font-size:16px;font-weight:700;min-width:120px;text-align:center}
+.btn-today{padding:6px 14px;border:none;border-radius:8px;background:var(--blue);color:#fff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.btn-add-ev{padding:7px 14px;border:none;border-radius:8px;background:var(--blue);color:#fff;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;margin-right:8px}
+
+/* SETTINGS DROPDOWN */
+.settings-wrap{position:relative}
+.btn-gear{padding:7px 11px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--txt);font-size:16px;line-height:1;cursor:pointer;transition:background .12s}
+.btn-gear:hover{background:var(--bg)}
+.dropdown{position:absolute;top:calc(100% + 6px);left:0;min-width:220px;background:var(--bg2);border:1px solid var(--border);border-radius:11px;box-shadow:0 8px 28px rgba(0,0,0,.18);padding:6px;z-index:800;display:none}
+.dropdown.show{display:block}
+.dropdown button{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:none;background:transparent;color:var(--txt);font-family:inherit;font-size:13.5px;font-weight:500;text-align:start;border-radius:8px;cursor:pointer}
+.dropdown button:hover{background:var(--bg)}
+.dropdown .dd-sep{height:1px;background:var(--border);margin:5px 4px}
+.dropdown .dd-emoji{font-size:15px;width:20px;text-align:center}
+
+/* CALENDAR MANAGER */
+.cal-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:9px;margin-bottom:8px;background:var(--bg2)}
+.cal-swatch{width:22px;height:22px;border-radius:6px;flex-shrink:0;border:none;cursor:pointer;padding:0}
+.cal-name-in{flex:1;border:1px solid transparent;background:transparent;color:var(--txt);font-family:inherit;font-size:13.5px;font-weight:600;padding:4px 6px;border-radius:6px}
+.cal-name-in:focus{border-color:var(--border);background:var(--bg);outline:none}
+.cal-eye{border:none;background:transparent;cursor:pointer;font-size:15px;opacity:.75;padding:4px}
+.cal-del{border:none;background:transparent;cursor:pointer;font-size:14px;opacity:.6;padding:4px}
+.cal-del:hover{opacity:1}
+.cal-color-cell{display:inline-block;width:11px;height:11px;border-radius:3px;flex-shrink:0;margin-inline-end:5px;vertical-align:middle}
+
+/* PRINT */
+@media print{
+  .side-col{display:none!important}
+  .main-col{border:none!important;padding:0!important}
+  .page-header > div:last-child > *:not(.nav-row){display:none!important}
+  .nav-btn{display:none!important}
+  .overlay{display:none!important}
+  body,.main-col{background:#fff!important}
+}
+
+/* VIEW TABS */
+.view-tabs{display:flex;gap:4px;background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:3px}
+.view-tab{padding:6px 12px;border:none;background:transparent;border-radius:7px;font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--txt);opacity:.6;transition:all .12s}
+.view-tab:hover{opacity:.85}
+.view-tab.active{background:var(--blue);color:#fff;opacity:1}
+
+/* VIEW SWITCHER (dropdown) */
+.view-switcher{position:relative}
+.btn-view{display:flex;align-items:center;gap:10px;justify-content:space-between;min-width:104px;padding:7px 14px;border:1.5px solid var(--blue);border-radius:999px;background:var(--bg2);color:var(--txt);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background .12s}
+.btn-view:hover{background:var(--bl)}
+.btn-view .caret{font-size:10px;opacity:.6}
+.view-dd{min-width:160px}
+.view-dd button.active{background:var(--bl);color:var(--bt)}
+
+/* DRAG & DROP */
+[draggable=true]{cursor:grab}
+.dragging{opacity:.4}
+.cal-day.drag-over{border-color:var(--blue);background:var(--bl);box-shadow:0 0 0 2px var(--blue) inset}
+.dw-col.drag-over{background:var(--bl)}
+.dw-untimed-col.drag-over{background:var(--bl);border-radius:7px}
+/* سحب/تعديل أحداث المدرج الزمني بالمؤشر (نفس تجربة تقييم اليوم) */
+.dw-event.draggable{cursor:grab;touch-action:none;user-select:none}
+.dw-event.dragging{cursor:grabbing;opacity:.9;z-index:20;box-shadow:0 4px 14px rgba(0,0,0,.28)}
+.dw-resize{position:absolute;bottom:0;left:0;right:0;height:9px;cursor:ns-resize;border-radius:0 0 6px 6px}
+.dw-resize:hover{background:rgba(0,0,0,.14)}
+
+/* SIDEBAR CALENDAR FILTERS */
+.cal-filters{margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.cal-filter-item{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;padding:5px 2px;cursor:pointer}
+.cal-filter-item input{cursor:pointer;accent-color:var(--blue)}
+
+/* CALENDAR GRID */
+.cal-header{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px}
+.cal-dh{text-align:center;font-size:12px;font-weight:600;opacity:.45;padding:4px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-day{min-height:90px;padding:6px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--bg2);transition:border-color .12s;position:relative}
+.cal-day:hover{border-color:var(--blue)}
+.cal-day.other-month{opacity:.35}
+.cal-day.today{border-color:var(--blue);background:var(--bl)}
+.cal-day.selected{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue)}
+.day-num{font-size:13px;font-weight:600;margin-bottom:4px}
+.today .day-num{color:var(--bt)}
+.ev-dots{display:flex;flex-wrap:wrap;gap:3px;margin-top:2px}
+.ev-dot{font-size:10.5px;padding:1px 5px;border-radius:4px;font-weight:500;white-space:nowrap;overflow:hidden;max-width:100%;cursor:pointer}
+.ev-dot.event{background:var(--bl);color:var(--bt)}
+.ev-dot.repeat{background:var(--pl);color:var(--pt)}
+.ev-dot.reading{background:var(--ol);color:var(--ot)}
+.ev-dot.checkin{background:var(--gl);color:var(--gt)}
+.ev-dot.task{background:var(--gl);color:var(--gt)}
+.ev-dot.task.done{opacity:.5;text-decoration:line-through}
+
+/* YEAR VIEW */
+.year-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:1100px){.year-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:760px){.year-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.year-grid{grid-template-columns:1fr}}
+.mini-month{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:10px}
+.mini-month-title{font-size:13px;font-weight:700;margin-bottom:8px;text-align:center;cursor:pointer}
+.mini-month-title:hover{color:var(--bt)}
+.mini-cal-header{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:2px}
+.mini-dh{text-align:center;font-size:9px;opacity:.4;font-weight:600}
+.mini-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.mini-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:10px;border-radius:50%;cursor:pointer;position:relative}
+.mini-day.other-month{opacity:.2;cursor:default}
+.mini-day.today{background:var(--bl);color:var(--bt);font-weight:700}
+.mini-day:hover:not(.other-month){background:var(--bg)}
+.mini-day-dot{position:absolute;bottom:1px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--gt)}
+
+/* DAY/WEEK HOURLY TIMELINE */
+.dw-days-header{display:none;border-bottom:1px solid var(--border);margin-bottom:0}
+.dw-day-head{text-align:center;padding:8px 4px;font-size:12px;font-weight:600;opacity:.6}
+.dw-day-head.today{color:var(--bt);opacity:1}
+.dw-day-head .dnum{font-size:15px;font-weight:700;margin-top:2px}
+.dw-untimed{display:none;padding:8px 4px;gap:6px}
+.dw-untimed-col{display:flex;flex-direction:column;gap:4px;min-height:4px}
+.dw-chip{display:flex;align-items:center;gap:6px;padding:6px 9px;border-radius:7px;font-size:11.5px;font-weight:600;background:var(--bl);color:var(--bt);cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.dw-chip.task{background:var(--gl);color:var(--gt)}
+.dw-chip.task.done{opacity:.55;text-decoration:line-through}
+.dw-chip.repeat{background:var(--pl);color:var(--pt)}
+.dw-scroll{display:none;position:relative;flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none}
+.dw-scroll::-webkit-scrollbar{width:0;height:0;display:none}
+.main-col{scrollbar-width:none;-ms-overflow-style:none}
+.main-col::-webkit-scrollbar{width:0;height:0;display:none}
+.dw-bg{position:relative}
+.dw-hour-row{height:52px;border-top:1px solid var(--border);box-sizing:border-box;position:relative}
+.dw-hour-row:first-child{border-top:none}
+.dw-hour-lbl{position:absolute;top:3px;right:8px;font-size:10.5px;opacity:.55;background:var(--bg2);padding:1px 5px;border-radius:4px;z-index:2;white-space:nowrap;font-variant-numeric:tabular-nums}
+.dw-cols{position:absolute;inset:0;display:grid}
+.dw-col{position:relative;border-inline-start:1px solid var(--border);cursor:crosshair;user-select:none}
+.dw-col:first-child{border-inline-start:none}
+.dw-event{position:absolute;left:2px;right:2px;background:var(--bl);color:var(--bt);border-radius:6px;padding:3px 6px;font-size:11px;font-weight:600;border-right:3px solid var(--bt);overflow:hidden;cursor:pointer;z-index:2;line-height:1.3}
+.dw-event.repeat{background:var(--pl);color:var(--pt);border-right-color:var(--pt)}
+.dw-now-line{position:absolute;left:0;right:0;height:2px;background:#dc2626;z-index:3;pointer-events:none}
+.dw-now-line::before{content:'';position:absolute;right:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:#dc2626}
+.dw-drag-sel{position:absolute;left:2px;right:2px;background:rgba(37,99,235,.22);border:1px dashed var(--blue);border-radius:6px;z-index:4;pointer-events:none;font-size:10.5px;color:var(--bt);padding:2px 6px;font-weight:600;overflow:hidden}
+
+/* SIDE */
+.side-title{font-size:14px;font-weight:700;margin-bottom:12px;opacity:.6}
+.sel-day-header{font-size:16px;font-weight:700;margin-bottom:14px;color:var(--bt)}
+.ev-card{padding:10px 12px;border-radius:var(--r);border:1px solid var(--border);margin-bottom:8px;background:var(--bg2)}
+.ev-card-title{font-size:13.5px;font-weight:600;margin-bottom:3px}
+.ev-card-sub{font-size:12px;opacity:.5}
+.ev-card-del{border:none;background:none;cursor:pointer;font-size:16px;opacity:.35;padding:0 4px;line-height:1;color:#dc2626;flex-shrink:0}
+.ev-card-del:hover{opacity:1}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;font-weight:500;margin-bottom:4px}
+.badge-event{background:var(--bl);color:var(--bt)}
+.badge-repeat{background:var(--pl);color:var(--pt)}
+.badge-reading{background:var(--ol);color:var(--ot)}
+.badge-checkin{background:var(--gl);color:var(--gt)}
+.badge-task{background:var(--gl);color:var(--gt)}
+.task-check{width:20px;height:20px;border:2px solid var(--border);border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px}
+.task-check.done{background:var(--green);border-color:var(--green);color:#fff}
+.repeat-badge{font-size:10px;padding:1px 6px;border-radius:999px;background:var(--pl);color:var(--pt);font-weight:600;margin-right:4px}
+
+/* CHECKIN STATS */
+.ci-stats{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:16px}
+.ci-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:13px}
+.ci-val{font-weight:700;color:var(--bt)}
+.no-items{text-align:center;opacity:.4;font-size:13px;padding:20px 0}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center}
+.overlay.show{display:flex}
+.modal{background:var(--bg2);border-radius:14px;padding:24px;width:400px;max-width:94vw;box-shadow:0 16px 48px rgba(0,0,0,.25);animation:pop .2s ease}
+@keyframes pop{from{transform:scale(.95);opacity:0}to{transform:scale(1);opacity:1}}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{border:none;background:none;font-size:18px;cursor:pointer;opacity:.5;color:var(--txt)}
+.fl{margin-bottom:12px}
+.fl label{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px}
+.fi,.fsel,.fta{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--txt);font-family:inherit;font-size:13.5px;outline:none;direction:rtl}
+.fi:focus,.fsel:focus,.fta:focus{border-color:var(--blue)}
+.modal-actions{display:flex;gap:8px;margin-top:16px}
+.btn-p{flex:1;padding:10px;border:none;border-radius:9px;background:var(--blue);color:#fff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.btn-sec{padding:10px 14px;border:1px solid var(--border);border-radius:9px;background:transparent;color:var(--txt);font-family:inherit;font-size:14px;cursor:pointer}
+/* مبدّل النوع (حدث / مهمة) أعلى النافذة — نفس تقييم اليوم */
+.type-toggle{display:flex;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:16px}
+.tt-btn{flex:1;padding:8px;border:none;border-radius:7px;background:transparent;color:var(--txt);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;opacity:.55;transition:all .12s}
+.tt-btn:hover{opacity:.85}
+.tt-btn.active{background:var(--blue);color:#fff;opacity:1}
+.tt-btn.active.task{background:var(--green)}
+
+@media(max-width:700px){.layout{grid-template-columns:1fr;height:auto;min-height:100vh}.main-col{overflow-y:visible}.side-col{border-top:1px solid var(--border)}.dw-scroll{flex:none;max-height:70vh}}
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="main-col">
+    <div class="page-header">
+      <div class="page-title">📅 <span data-i18n="page.title">التقويم</span></div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <button class="btn-add-ev" onclick="openAddEvent()">+ <span data-i18n="btn.event">حدث</span></button>
+        <button class="btn-add-ev" style="background:var(--green)" onclick="openAddTask()">+ <span data-i18n="btn.task">مهمة</span></button>
+        <input type="file" id="ics-file-input" accept=".ics,text/calendar" style="display:none" onchange="handleICSFile(this)">
+        <div class="view-switcher">
+          <button class="btn-view" id="view-switch-btn" onclick="toggleViewMenu(event)"><span id="view-current" data-i18n="view.month">شهر</span><span class="caret">▼</span></button>
+          <div class="dropdown view-dd" id="view-menu">
+            <button data-view="day" onclick="pickView('day')" data-i18n="view.day">يوم</button>
+            <button data-view="week" onclick="pickView('week')" data-i18n="view.week">أسبوع</button>
+            <button data-view="month" onclick="pickView('month')" data-i18n="view.month">شهر</button>
+            <button data-view="year" onclick="pickView('year')" data-i18n="view.year">سنة</button>
+          </div>
+        </div>
+        <button class="btn-today" onclick="goToday()" data-i18n="btn.today">اليوم</button>
+        <div class="nav-row">
+          <button class="nav-btn" onclick="prevPeriod()">‹</button>
+          <div class="cur-month" id="cur-month"></div>
+          <button class="nav-btn" onclick="nextPeriod()">›</button>
+        </div>
+        <div class="settings-wrap">
+          <button class="btn-gear" id="settings-gear" onclick="toggleSettingsMenu(event)" title="الإعدادات" data-i18n-title="btn.settings">⚙️</button>
+          <div class="dropdown" id="settings-menu">
+            <button onclick="closeSettingsMenu();openCalManager()"><span class="dd-emoji">🗂️</span><span data-i18n="menu.calendars">إدارة التقاويم</span></button>
+            <div class="dd-sep"></div>
+            <button onclick="closeSettingsMenu();exportICS()"><span class="dd-emoji">📤</span><span data-i18n="menu.export">تصدير ‎.ics</span></button>
+            <button onclick="closeSettingsMenu();triggerICSImport()"><span class="dd-emoji">📥</span><span data-i18n="menu.import">استيراد ‎.ics</span></button>
+            <button onclick="closeSettingsMenu();window.print()"><span class="dd-emoji">🖨️</span><span data-i18n="menu.print">طباعة</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="cal-header" id="cal-header"></div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div class="year-grid" id="year-grid" style="display:none"></div>
+    <div class="dw-days-header" id="dw-days-header"></div>
+    <div class="dw-untimed" id="dw-untimed"></div>
+    <div class="dw-scroll" id="dw-scroll">
+      <div class="dw-bg" id="dw-bg"></div>
+      <div class="dw-cols" id="dw-cols"></div>
+    </div>
+  </div>
+
+  <div class="side-col">
+    <div id="cal-filters" class="cal-filters"></div>
+    <div class="sel-day-header" id="sel-day-header" data-i18n="side.pickDay">اختر يوماً لعرض تفاصيله</div>
+    <div id="side-content"></div>
+  </div>
+</div>
+
+<!-- ADD EVENT MODAL -->
+<div class="overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" data-i18n="modal.newEvent">حدث جديد</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="type-toggle">
+      <button type="button" class="tt-btn active" data-i18n="toggle.event">📌 حدث</button>
+      <button type="button" class="tt-btn task" onclick="switchCalToTask()" data-i18n="toggle.task">✅ مهمة</button>
+    </div>
+    <div class="fl"><label data-i18n="field.title">العنوان *</label><input class="fi" id="ev-title" placeholder="اسم الحدث" data-i18n-ph="field.title.ph" oninput="liveSaveEvent()"></div>
+    <div class="fl"><label data-i18n="field.calendar">التقويم</label><select class="fsel" id="ev-cal" onchange="liveSaveEvent()"></select></div>
+    <div class="fl"><label data-i18n="field.date">التاريخ *</label><input class="fi" type="date" id="ev-date" onchange="liveSaveEvent()"></div>
+    <div style="display:flex;gap:10px">
+      <div class="fl" style="flex:1"><label data-i18n="field.time">من الساعة</label><input class="fi" type="time" id="ev-time" onchange="onStartTimeChange()"></div>
+      <div class="fl" style="flex:1"><label data-i18n="field.endTime">إلى الساعة</label><input class="fi" type="time" id="ev-endtime" onchange="liveSaveEvent()"></div>
+    </div>
+    <div class="fl">
+      <label data-i18n="field.repeat">التكرار</label>
+      <select class="fsel" id="ev-repeat">
+        <option value="none" data-i18n="repeat.none">مرة واحدة</option>
+        <option value="daily" data-i18n="repeat.daily">يومي</option>
+        <option value="weekly" data-i18n="repeat.weekly">أسبوعي</option>
+        <option value="monthly" data-i18n="repeat.monthly">شهري</option>
+        <option value="yearly" data-i18n="repeat.yearly">سنوي</option>
+      </select>
+    </div>
+    <div class="fl" id="repeat-end-wrap" style="display:none">
+      <label data-i18n="field.repeatEnd">تاريخ انتهاء التكرار (اختياري)</label>
+      <input class="fi" type="date" id="ev-repeat-end" onchange="liveSaveEvent()">
+    </div>
+    <div class="fl"><label data-i18n="field.notes">الملاحظات</label><textarea class="fta" id="ev-note" placeholder="تفاصيل…" data-i18n-ph="field.notes.ph" style="min-height:60px" oninput="liveSaveEvent()"></textarea></div>
+    <div class="fl"><label data-i18n="field.location">الموقع / الرابط (اختياري)</label><input class="fi" id="ev-location" placeholder="https://…" data-i18n-ph="field.location.ph" style="direction:ltr;text-align:right" oninput="liveSaveEvent()"></div>
+    <div class="modal-actions">
+      <button class="btn-p" onclick="closeModal()" data-i18n="btn.done">تم ✓</button>
+      <button class="btn-sec" onclick="closeModal()" data-i18n="btn.close">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- CALENDAR MANAGER MODAL -->
+<div class="overlay" id="cal-modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" data-i18n="modal.calendars">إدارة التقاويم</div>
+      <button class="modal-close" onclick="closeCalManager()">✕</button>
+    </div>
+    <p style="font-size:12.5px;opacity:.7;margin-bottom:12px" data-i18n="cal.hint">أنشئ أنواع تقاويم متعددة بألوان مختلفة (شخصي، عمل، دراسة…) ووزّع أحداثك عليها.</p>
+    <div id="cal-list"></div>
+    <button class="btn-sec" style="width:100%;margin-top:6px" onclick="addCalendar()">+ <span data-i18n="cal.add">إضافة تقويم</span></button>
+    <div class="modal-actions">
+      <button class="btn-p" onclick="closeCalManager()" data-i18n="btn.done">تم ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD TASK MODAL -->
+<div class="overlay" id="task-modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="task-modal-title" data-i18n="modal.newTask">مهمة جديدة</div>
+      <button class="modal-close" onclick="closeTaskModal()">✕</button>
+    </div>
+    <div class="type-toggle">
+      <button type="button" class="tt-btn" onclick="switchCalToEvent()" data-i18n="toggle.event">📌 حدث</button>
+      <button type="button" class="tt-btn task active" data-i18n="toggle.task">✅ مهمة</button>
+    </div>
+    <div class="fl"><label data-i18n="field.title">العنوان *</label><input class="fi" id="t-title" placeholder="عنوان المهمة" data-i18n-ph="field.taskTitle.ph" oninput="liveSaveCalTask()"></div>
+    <div class="fl"><label data-i18n="field.desc">الوصف</label><textarea class="fta" id="t-desc" placeholder="وصف اختياري…" data-i18n-ph="field.desc.ph" style="min-height:60px" oninput="liveSaveCalTask()"></textarea></div>
+    <div class="fl"><label data-i18n="field.group">المجموعة</label>
+      <select class="fsel" id="t-group" onchange="liveSaveCalTask()"><option value="" data-i18n="field.noGroup">— بلا مجموعة —</option></select>
+    </div>
+    <div class="fl"><label data-i18n="field.due">تاريخ الاستحقاق *</label>
+      <div style="display:flex;gap:6px">
+        <input class="fi" type="date" id="t-due" onchange="liveSaveCalTask()">
+        <button type="button" style="padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);color:var(--txt);font-family:inherit;font-size:12.5px;cursor:pointer;white-space:nowrap" onclick="document.getElementById('t-due').value=todayStr();liveSaveCalTask()" data-i18n="btn.today">اليوم</button>
+      </div>
+    </div>
+    <div class="fl"><label data-i18n="field.status">الحالة</label>
+      <select class="fsel" id="t-status" onchange="liveSaveCalTask()">
+        <option value="todo" data-i18n="status.todo">لم تبدأ</option>
+        <option value="in_progress" data-i18n="status.inProgress">جارية</option>
+        <option value="done" data-i18n="status.done">مكتملة</option>
+      </select>
+    </div>
+    <div class="fl"><label data-i18n="field.location">الموقع / الرابط (اختياري)</label><input class="fi" id="t-location" placeholder="https://…" data-i18n-ph="field.location.ph" style="direction:ltr;text-align:right" oninput="liveSaveCalTask()"></div>
+    <div class="modal-actions">
+      <button class="btn-p" onclick="closeTaskModal()" data-i18n="btn.done">تم ✓</button>
+      <button class="btn-danger" id="task-delete-btn" onclick="deleteCalTask(curTaskId);closeTaskModal()" style="display:none;padding:10px 14px;border:none;border-radius:9px;background:#dc2626;color:#fff;font-family:inherit;font-size:14px;cursor:pointer" data-i18n="btn.delete">حذف</button>
+      <button class="btn-sec" onclick="closeTaskModal()" data-i18n="btn.close">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.documentElement.setAttribute('data-theme', localStorage.getItem('app-theme')||'light');
+window.addEventListener('message', e=>{
+  if(e.data?.type==='change-theme') document.documentElement.setAttribute('data-theme', e.data.theme);
+  if(e.data?.type==='tasks-cleaned'){ render(); if(selDate) selectDay(selDate); }
+  if(e.data?.type==='change-lang') applyLang(e.data.lang);
+});
+
+document.getElementById('ev-repeat').onchange = function(){
+  document.getElementById('repeat-end-wrap').style.display = this.value!=='none' ? '' : 'none';
+  liveSaveEvent();
+};
+
+// ── اللغة ──
+const I18N = {
+  ar: {
+    'page.title':'التقويم', 'btn.event':'حدث', 'btn.task':'مهمة', 'btn.today':'اليوم',
+    'side.pickDay':'اختر يوماً لعرض تفاصيله',
+    'modal.newEvent':'حدث جديد', 'field.title':'العنوان *', 'field.title.ph':'اسم الحدث', 'field.date':'التاريخ *', 'field.time':'من الساعة', 'field.endTime':'إلى الساعة',
+    'field.repeat':'التكرار', 'repeat.none':'مرة واحدة', 'repeat.daily':'يومي', 'repeat.weekly':'أسبوعي', 'repeat.monthly':'شهري', 'repeat.yearly':'سنوي',
+    'btn.import':'استيراد', 'import.done':'تم الاستيراد ✓\n\nأحداث مضافة: {ev}\nمهام مضافة: {task}\nعناصر مكرّرة تم تخطّيها: {skip}', 'import.empty':'لم يُعثر على أحداث أو مهام في الملف.', 'import.error':'تعذّر قراءة ملف ‎.ics:',
+    'btn.settings':'الإعدادات', 'menu.calendars':'إدارة التقاويم', 'menu.export':'تصدير ‎.ics', 'menu.import':'استيراد ‎.ics', 'menu.print':'طباعة',
+    'field.calendar':'التقويم', 'modal.calendars':'إدارة التقاويم', 'cal.hint':'أنشئ أنواع تقاويم متعددة بألوان مختلفة (شخصي، عمل، دراسة…) ووزّع أحداثك عليها.', 'cal.add':'إضافة تقويم', 'cal.newName':'تقويم جديد', 'cal.confirmDelete':'حذف هذا التقويم؟ ستُنقل أحداثه إلى التقويم الأول.', 'cal.lastOne':'لا يمكن حذف آخر تقويم.', 'export.empty':'لا توجد أحداث أو مهام للتصدير.',
+    'field.repeatEnd':'تاريخ انتهاء التكرار (اختياري)', 'field.notes':'الملاحظات', 'field.notes.ph':'تفاصيل…',
+    'field.location':'الموقع / الرابط (اختياري)', 'field.location.ph':'https://…',
+    'btn.done':'تم ✓', 'btn.close':'إغلاق', 'btn.delete':'حذف',
+    'modal.newTask':'مهمة جديدة', 'modal.editTask':'تعديل المهمة', 'field.taskTitle.ph':'عنوان المهمة', 'field.desc':'الوصف', 'field.desc.ph':'وصف اختياري…',
+    'field.group':'المجموعة', 'field.noGroup':'— بلا مجموعة —', 'field.due':'تاريخ الاستحقاق *', 'field.status':'الحالة',
+    'status.todo':'لم تبدأ', 'status.inProgress':'جارية', 'status.done':'مكتملة',
+    'side.tasks':'📌 المهام', 'side.stats':'📊 إحصائيات اليوم', 'stat.tasksDone':'✅ مهام مكتملة', 'stat.progUpdates':'📊 تحديثات نسبة',
+    'stat.readSessions':'📖 جلسات قراءة', 'stat.customActs':'📝 أنشطة مسجلة', 'stat.skipped':'تجاهل',
+    'side.timeline':'Timeline', 'side.readSessions':'📖 جلسات القراءة', 'side.events':'📌 الأحداث',
+    'badge.recurring':'🔁 متكرر', 'badge.event':'حدث', 'badge.reading':'قراءة', 'no.items':'لا يوجد شيء في هذا اليوم', 'title.delete':'حذف', 'dot.reading':'📖 قراءة',
+    'pct.label':'نسبة', 'link.open':'🔗 فتح الرابط',
+    'ci.task_completed':'أكمل مهمة', 'ci.task_progress':'حدّث مهمة', 'ci.book_reading':'قراءة كتاب', 'ci.custom_activity':'نشاط', 'ci.skipped':'تجاهل',
+    'btn.today':'اليوم', 'view.day':'يوم', 'view.week':'أسبوع', 'view.month':'شهر', 'view.year':'سنة',
+    'toggle.event':'📌 حدث', 'toggle.task':'✅ مهمة'
+  },
+  en: {
+    'page.title':'Calendar', 'btn.event':'Event', 'btn.task':'Task', 'btn.today':'Today',
+    'side.pickDay':'Pick a day to see its details',
+    'modal.newEvent':'New Event', 'field.title':'Title *', 'field.title.ph':'Event name', 'field.date':'Date *', 'field.time':'From', 'field.endTime':'To',
+    'field.repeat':'Repeat', 'repeat.none':'Once', 'repeat.daily':'Daily', 'repeat.weekly':'Weekly', 'repeat.monthly':'Monthly', 'repeat.yearly':'Yearly',
+    'btn.import':'Import', 'import.done':'Imported ✓\n\nEvents added: {ev}\nTasks added: {task}\nDuplicates skipped: {skip}', 'import.empty':'No events or tasks found in the file.', 'import.error':'Could not read .ics file:',
+    'btn.settings':'Settings', 'menu.calendars':'Manage calendars', 'menu.export':'Export .ics', 'menu.import':'Import .ics', 'menu.print':'Print',
+    'field.calendar':'Calendar', 'modal.calendars':'Manage calendars', 'cal.hint':'Create multiple calendar types with different colors (Personal, Work, Study…) and assign your events to them.', 'cal.add':'Add calendar', 'cal.newName':'New calendar', 'cal.confirmDelete':'Delete this calendar? Its events move to the first calendar.', 'cal.lastOne':'Cannot delete the last calendar.', 'export.empty':'No events or tasks to export.',
+    'field.repeatEnd':'Repeat end date (optional)', 'field.notes':'Notes', 'field.notes.ph':'Details…',
+    'field.location':'Location / Link (optional)', 'field.location.ph':'https://…',
+    'btn.done':'Done ✓', 'btn.close':'Close', 'btn.delete':'Delete',
+    'modal.newTask':'New Task', 'modal.editTask':'Edit Task', 'field.taskTitle.ph':'Task title', 'field.desc':'Description', 'field.desc.ph':'Optional description…',
+    'field.group':'Group', 'field.noGroup':'— No group —', 'field.due':'Due Date *', 'field.status':'Status',
+    'status.todo':'To Do', 'status.inProgress':'In Progress', 'status.done':'Done',
+    'side.tasks':'📌 Tasks', 'side.stats':'📊 Day Stats', 'stat.tasksDone':'✅ Tasks Completed', 'stat.progUpdates':'📊 Progress Updates',
+    'stat.readSessions':'📖 Reading Sessions', 'stat.customActs':'📝 Custom Activities', 'stat.skipped':'Skipped',
+    'side.timeline':'Timeline', 'side.readSessions':'📖 Reading Sessions', 'side.events':'📌 Events',
+    'badge.recurring':'🔁 Recurring', 'badge.event':'Event', 'badge.reading':'Reading', 'no.items':'Nothing on this day', 'title.delete':'Delete', 'dot.reading':'📖 Reading',
+    'pct.label':'Progress', 'link.open':'🔗 Open Link',
+    'ci.task_completed':'Completed task', 'ci.task_progress':'Updated task', 'ci.book_reading':'Read a book', 'ci.custom_activity':'Activity', 'ci.skipped':'Skipped',
+    'btn.today':'Today', 'view.day':'Day', 'view.week':'Week', 'view.month':'Month', 'view.year':'Year',
+    'toggle.event':'📌 Event', 'toggle.task':'✅ Task'
+  }
+};
+let curLang = localStorage.getItem('app-lang') || 'ar';
+function t(key){ return (I18N[curLang] && I18N[curLang][key]) || key; }
+function applyLang(l){
+  curLang = l;
+  document.documentElement.setAttribute('lang', l==='ar'?'ar':'en');
+  document.documentElement.setAttribute('dir', l==='ar'?'rtl':'ltr');
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.getAttribute('data-i18n')); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder = t(el.getAttribute('data-i18n-ph')); });
+  document.querySelectorAll('[data-i18n-title]').forEach(el=>{ el.title = t(el.getAttribute('data-i18n-title')); });
+  render();
+  if(selDate) selectDay(selDate);
+}
+
+const KEY_EV = 'calendar-events', KEY_CI = 'daily-checkins', KEY_BOOKS = 'books-library', KEY_CALS = 'calendar-list';
+const KEY_T = 'kanban-tasks', KEY_G = 'kanban-groups';
+let curView = 'month';
+let focusDate = new Date(); focusDate.setHours(12,0,0,0);
+let selDate = null, curEvId = null, curTaskId = null;
+let evJustCreated = false, taskJustCreated = false; // لتنظيف المسودة عند التبديل بين حدث/مهمة
+const ROW_H = 52;
+let dragState = null;
+
+function dsFromDate(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function addDays(d,n){ const nd=new Date(d); nd.setDate(nd.getDate()+n); return nd; }
+function startOfWeek(d){ const nd=new Date(d); nd.setDate(nd.getDate()-nd.getDay()); return nd; }
+function weekDates(focus){ const start=startOfWeek(focus); return Array.from({length:7},(_,i)=>addDays(start,i)); }
+function hourLabel(h){
+  if(curLang==='ar'){
+    if(h%24===0) return '12 ص';
+    if(h<12) return h+' ص';
+    if(h===12) return '12 م';
+    return (h-12)+' م';
+  }
+  const ap = h<12?'AM':'PM'; let hh=h%12; if(hh===0) hh=12; return hh+' '+ap;
+}
+function minutesToTimeStr(totalMin){
+  const h=Math.floor(totalMin/60)%24, m=totalMin%60;
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+}
+function pixelsToMinutes(px){
+  const minutes = Math.max(0, px) / ROW_H * 60;
+  return Math.round(minutes/15)*15;
+}
+function updateDragSel(div, mn1, mn2, startH){
+  const a=Math.min(mn1,mn2), b=Math.max(mn1,mn2);
+  div.style.top=(a/60*ROW_H)+'px';
+  div.style.height=Math.max((b-a)/60*ROW_H, 16)+'px';
+  div.textContent = b>a ? (minutesToTimeStr(startH*60+a)+' - '+minutesToTimeStr(startH*60+b)) : minutesToTimeStr(startH*60+a);
+}
+function attachDragHandlers(colEl, ds, startH){
+  colEl.addEventListener('mousedown', (e)=>{
+    if(e.target.closest('.dw-event')) return;
+    const rect = colEl.getBoundingClientRect();
+    const startMinutes = pixelsToMinutes(e.clientY - rect.top);
+    const selDiv = document.createElement('div');
+    selDiv.className = 'dw-drag-sel';
+    colEl.appendChild(selDiv);
+    updateDragSel(selDiv, startMinutes, startMinutes, startH);
+    dragState = { colEl, ds, startH, startMinutes, selDiv };
+    e.preventDefault();
+  });
+}
+document.addEventListener('mousemove', (e)=>{
+  if(!dragState) return;
+  const rect = dragState.colEl.getBoundingClientRect();
+  const curMinutes = pixelsToMinutes(e.clientY - rect.top);
+  updateDragSel(dragState.selDiv, dragState.startMinutes, curMinutes, dragState.startH);
+});
+document.addEventListener('mouseup', (e)=>{
+  if(!dragState) return;
+  const {colEl, ds, startH, startMinutes, selDiv} = dragState;
+  const rect = colEl.getBoundingClientRect();
+  const curMinutes = pixelsToMinutes(Math.max(0, Math.min(e.clientY - rect.top, rect.height)));
+  let mn1 = Math.min(startMinutes, curMinutes);
+  let mn2 = Math.max(startMinutes, curMinutes);
+  if(mn2 - mn1 < 15) mn2 = mn1 + 60; // نقرة بلا سحب = ساعة افتراضية
+  selDiv.remove();
+  dragState = null;
+  openAddEvent();
+  document.getElementById('ev-date').value = ds;
+  document.getElementById('ev-time').value = minutesToTimeStr(startH*60+mn1);
+  document.getElementById('ev-endtime').value = minutesToTimeStr(startH*60+mn2);
+  setTimeout(()=>document.getElementById('ev-title').focus(),60);
+});
+
+function getEvents(){ return JSON.parse(localStorage.getItem(KEY_EV)||'[]'); }
+function getCheckins(){ return JSON.parse(localStorage.getItem(KEY_CI)||'[]'); }
+function getBooks(){ return JSON.parse(localStorage.getItem(KEY_BOOKS)||'[]'); }
+function saveEvents(ev){ localStorage.setItem(KEY_EV, JSON.stringify(ev)); }
+function getTasks(){ return JSON.parse(localStorage.getItem(KEY_T)||'[]'); }
+function saveTasksData(t){ localStorage.setItem(KEY_T, JSON.stringify(t)); }
+function getTaskGroups(){ return JSON.parse(localStorage.getItem(KEY_G)||'[]'); }
+function getTasksForDate(ds, allTasks){ return allTasks.filter(t=>!t.deleted && t.dueDate===ds); }
+function todayStr(){ return new Date().toISOString().split('T')[0]; }
+const MONTH_NAMES={
+  ar:['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'],
+  en:['January','February','March','April','May','June','July','August','September','October','November','December']
+};
+const DAY_NAMES={
+  ar:['أحد','اثن','ثلث','أرب','خمس','جمع','سبت'],
+  en:['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+};
+function repeatLabel(r){ return I18N[curLang]['repeat.'+r] || r; }
+function ciLabel(type){ return I18N[curLang]['ci.'+type] || type; }
+
+// Get all events for a given date (including recurring ones)
+function getEventsForDate(ds, allEvents){
+  const result = [];
+  allEvents.forEach(ev=>{
+    if(isCalHidden(ev.calId)) return;
+    if(ev.date === ds){ result.push(ev); return; }
+    if(!ev.repeat || ev.repeat==='none') return;
+    const evDate = new Date(ev.date+'T12:00:00');
+    const checkDate = new Date(ds+'T12:00:00');
+    if(checkDate <= evDate) return;
+    if(ev.repeatEnd && ds > ev.repeatEnd) return;
+    let matches = false;
+    if(ev.repeat==='daily') matches = true;
+    else if(ev.repeat==='weekly') matches = evDate.getDay()===checkDate.getDay();
+    else if(ev.repeat==='monthly') matches = evDate.getDate()===checkDate.getDate();
+    else if(ev.repeat==='yearly') matches = evDate.getMonth()===checkDate.getMonth() && evDate.getDate()===checkDate.getDate();
+    if(matches) result.push({...ev, _virtual:true, _originalDate:ev.date, date:ds});
+  });
+  return result;
+}
+
+function headerLabel(){
+  if(curView==='year') return String(focusDate.getFullYear());
+  if(curView==='month') return MONTH_NAMES[curLang][focusDate.getMonth()]+' '+focusDate.getFullYear();
+  if(curView==='day') return focusDate.toLocaleDateString(curLang==='ar'?'ar':'en-US',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  // week
+  const start=startOfWeek(focusDate), end=addDays(start,6);
+  const fmt=d=>d.toLocaleDateString(curLang==='ar'?'ar':'en-US',{day:'numeric',month:'short'});
+  return fmt(start)+' – '+fmt(end)+', '+end.getFullYear();
+}
+
+function setView(v){ curView=v; render(); }
+
+function render(){
+  if(dragState){ dragState.selDiv.remove(); dragState=null; }
+  document.getElementById('cur-month').textContent = headerLabel();
+  const vc=document.getElementById('view-current'); if(vc) vc.textContent = t('view.'+curView);
+  document.querySelectorAll('#view-menu button').forEach(b=>b.classList.toggle('active', b.dataset.view===curView));
+  renderCalFilters();
+
+  const calHeader = document.getElementById('cal-header');
+  const calGrid = document.getElementById('cal-grid');
+  const yearGrid = document.getElementById('year-grid');
+  const dwDaysHeader = document.getElementById('dw-days-header');
+  const dwUntimed = document.getElementById('dw-untimed');
+  const dwScroll = document.getElementById('dw-scroll');
+
+  calHeader.style.display='none'; calGrid.style.display='none'; yearGrid.style.display='none';
+  dwDaysHeader.style.display='none'; dwUntimed.style.display='none'; dwScroll.style.display='none';
+
+  if(curView==='year'){
+    yearGrid.style.display='';
+    renderYearView();
+    return;
+  }
+
+  if(curView==='month'){
+    calHeader.style.display='';
+    calGrid.style.display='';
+    calHeader.innerHTML = DAY_NAMES[curLang].map(d=>`<div class="cal-dh">${d}</div>`).join('');
+    renderMonthGrid(getEvents(), getCheckins(), getBooks(), getTasks());
+    return;
+  }
+
+  // day/week ── مدرج بالساعات
+  dwUntimed.style.display='grid';
+  dwScroll.style.display='block';
+  if(curView==='week') dwDaysHeader.style.display='grid';
+  renderTimelineView(curView);
+}
+
+function renderUntimedRow(dates, events, tasks, mode){
+  const el = document.getElementById('dw-untimed');
+  el.style.gridTemplateColumns = mode==='day' ? '1fr' : `repeat(${dates.length},1fr)`;
+  el.innerHTML = dates.map(d=>{
+    const ds = dsFromDate(d);
+    const dayTasks = getTasksForDate(ds, tasks);
+    const dayEvents = getEventsForDate(ds, events).filter(e=>!e.time);
+    const inner = dayTasks.map(tk=>`<div class="dw-chip task${tk.status==='done'?' done':''}" draggable="true" ondragstart="itemDragStart(event,'task','${tk.id}')" ondragend="itemDragEnd(event)" onclick="openEditTask('${tk.id}')">📌 ${esc(tk.title)}</div>`).join('')
+      + dayEvents.map(ev=>`<div class="dw-chip${ev.repeat&&ev.repeat!=='none'?' repeat':''}" style="background:${evTint(evColor(ev))};color:${evColor(ev)}"${ev._virtual?'':` draggable="true" ondragstart="itemDragStart(event,'event','${ev.id}')" ondragend="itemDragEnd(event)"`} onclick="${ev._virtual?'':`openEditEvent('${ev.id}')`}">${ev.repeat&&ev.repeat!=='none'?'🔁 ':''}${esc(ev.title)}</div>`).join('');
+    return `<div class="dw-untimed-col" ondragover="allowDrop(event)" ondragenter="if(dragItem)this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="dropUntimed(event,'${ds}')">${inner}</div>`;
+  }).join('');
+}
+
+function renderTimelineView(mode){
+  const events=getEvents(), checkins=getCheckins(), books=getBooks(), tasks=getTasks();
+  const dates = mode==='day' ? [new Date(focusDate)] : weekDates(focusDate);
+
+  renderUntimedRow(dates, events, tasks, mode);
+
+  const daysHeaderEl = document.getElementById('dw-days-header');
+  if(mode==='week'){
+    daysHeaderEl.style.gridTemplateColumns = `repeat(${dates.length},1fr)`;
+    daysHeaderEl.innerHTML = dates.map(d=>{
+      const isToday = dsFromDate(d)===todayStr();
+      return `<div class="dw-day-head${isToday?' today':''}">${DAY_NAMES[curLang][d.getDay()]}<div class="dnum">${d.getDate()}</div></div>`;
+    }).join('');
+  }
+
+  let startH=6, endH=23;
+  dates.forEach(d=>{
+    getEventsForDate(dsFromDate(d), events).filter(e=>e.time).forEach(e=>{
+      const h=parseInt(e.time.split(':')[0])||0;
+      if(h<startH) startH=h;
+      if(h+1>endH) endH=h+1;
+    });
+  });
+  const totalRows = endH-startH;
+
+  const bg = document.getElementById('dw-bg');
+  let bgHtml='';
+  for(let h=startH; h<endH; h++) bgHtml += `<div class="dw-hour-row"><span class="dw-hour-lbl">${hourLabel(h)}</span></div>`;
+  bg.innerHTML = bgHtml;
+  bg.style.height = (totalRows*ROW_H)+'px';
+
+  const colsEl = document.getElementById('dw-cols');
+  colsEl.style.gridTemplateColumns = `repeat(${dates.length},1fr)`;
+  colsEl.style.height = (totalRows*ROW_H)+'px';
+  colsEl.innerHTML = dates.map((d,i)=>`<div class="dw-col" data-idx="${i}"></div>`).join('');
+
+  const todayDs = todayStr();
+  const now = new Date();
+  dates.forEach((d,i)=>{
+    const ds = dsFromDate(d);
+    const colEl = colsEl.querySelector(`.dw-col[data-idx="${i}"]`);
+    const dayTimed = getEventsForDate(ds, events).filter(e=>e.time).map(ev=>{
+      const sMin=toMin(ev.time); return {ev, sMin, eMin:ev.endTime?toMin(ev.endTime):sMin+60, _col:0, _cols:1};
+    });
+    layoutOverlaps(dayTimed);
+    dayTimed.forEach(o=>{
+      const ev=o.ev;
+      const minsFromStart=o.sMin-startH*60;
+      const div=document.createElement('div');
+      div.className='dw-event'+(ev.repeat&&ev.repeat!=='none'?' repeat':'');
+      div.style.top=(minsFromStart/60*ROW_H)+'px';
+      div.style.height=Math.max(20,(o.eMin-o.sMin)/60*ROW_H-4)+'px';
+      // توزيع أفقي عند التداخل (نفس الوقت = جنب بعض)
+      if(o._cols>1){
+        div.style.right=`calc(2px + ${o._col} * (100% - 4px) / ${o._cols})`;
+        div.style.left='auto';
+        div.style.width=`calc((100% - 4px) / ${o._cols} - 2px)`;
+      }
+      div.textContent=(ev.repeat&&ev.repeat!=='none'?'🔁 ':'')+ev.title;
+      if(ev._virtual){
+        div.onclick=(e)=>{ e.stopPropagation(); selectDay(ds); };
+      } else {
+        div.setAttribute('data-evid', ev.id);
+        div.classList.add('draggable');
+        const rz=document.createElement('div'); rz.className='dw-resize'; div.appendChild(rz);
+      }
+      colEl.appendChild(div);
+    });
+    if(ds===todayDs){
+      const nowMins=(now.getHours()-startH)*60+now.getMinutes();
+      if(nowMins>=0 && nowMins<=totalRows*60){
+        const line=document.createElement('div');
+        line.className='dw-now-line';
+        line.style.top=(nowMins/60*ROW_H)+'px';
+        colEl.appendChild(line);
+      }
+    }
+    attachDragHandlers(colEl, ds, startH);
+    colEl.ondragover=allowDrop;
+    colEl.ondragenter=()=>{ if(dragItem) colEl.classList.add('drag-over'); };
+    colEl.ondragleave=(e)=>{ if(!colEl.contains(e.relatedTarget)) colEl.classList.remove('drag-over'); };
+    colEl.ondrop=(e)=>dropTimeline(e, ds, startH);
+  });
+
+  attachTimelineEventDrag(colsEl, dates, startH);
+
+  const scrollEl = document.getElementById('dw-scroll');
+  const scrollHour = dates.some(d=>dsFromDate(d)===todayDs) ? Math.max(startH, now.getHours()-2) : Math.max(startH,8);
+  scrollEl.scrollTop = (scrollHour-startH)*ROW_H;
+}
+
+function renderMonthGrid(events, checkins, books, tasks){
+  const grid = document.getElementById('cal-grid');
+  grid.className = 'cal-grid';
+  grid.innerHTML = '';
+  const y=focusDate.getFullYear(), m=focusDate.getMonth();
+  const first = new Date(y, m, 1);
+  const last  = new Date(y, m+1, 0);
+  let start = first.getDay();
+
+  for(let i=0;i<start;i++){
+    const d=new Date(y,m,0-start+i+1);
+    grid.appendChild(makeCell(dsFromDate(d), d.getDate(), true, events, checkins, books, tasks));
+  }
+  for(let d=1;d<=last.getDate();d++){
+    grid.appendChild(makeCell(dsFromDate(new Date(y,m,d)), d, false, events, checkins, books, tasks));
+  }
+  const total = start + last.getDate();
+  const rest = total % 7 === 0 ? 0 : 7 - (total%7);
+  for(let i=1;i<=rest;i++){
+    const d=new Date(y,m+1,i);
+    grid.appendChild(makeCell(dsFromDate(d), i, true, events, checkins, books, tasks));
+  }
+}
+
+function hasItemsOnDate(ds, events, checkins, books, tasks){
+  if(getEventsForDate(ds, events).length) return true;
+  if(getTasksForDate(ds, tasks).length) return true;
+  if(checkins.some(c=>c.timestamp && c.timestamp.startsWith(ds) && c.type!=='skipped')) return true;
+  if(books.some(b=>(b.readingSessions||[]).some(s=>s.date===ds))) return true;
+  return false;
+}
+
+function renderYearView(){
+  const grid = document.getElementById('year-grid');
+  const events=getEvents(), checkins=getCheckins(), books=getBooks(), tasks=getTasks();
+  const y = focusDate.getFullYear();
+  const today = todayStr();
+  let html = '';
+  for(let m=0;m<12;m++){
+    const first = new Date(y,m,1), last = new Date(y,m+1,0);
+    const start = first.getDay();
+    let daysHtml = '';
+    for(let i=0;i<start;i++) daysHtml += `<div class="mini-day other-month"></div>`;
+    for(let d=1; d<=last.getDate(); d++){
+      const ds = dsFromDate(new Date(y,m,d));
+      const has = hasItemsOnDate(ds, events, checkins, books, tasks);
+      daysHtml += `<div class="mini-day${ds===today?' today':''}" onclick="jumpToDay('${ds}')">${d}${has?'<span class="mini-day-dot"></span>':''}</div>`;
+    }
+    html += `<div class="mini-month">
+      <div class="mini-month-title" onclick="jumpToMonth(${y},${m})">${MONTH_NAMES[curLang][m]}</div>
+      <div class="mini-cal-header">${DAY_NAMES[curLang].map(d=>`<div class="mini-dh">${d[0]}</div>`).join('')}</div>
+      <div class="mini-cal-grid">${daysHtml}</div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function jumpToDay(ds){
+  const [y,m,d] = ds.split('-').map(Number);
+  focusDate = new Date(y, m-1, d, 12, 0, 0);
+  curView = 'day'; selDate = ds;
+  render(); selectDay(ds);
+}
+function jumpToMonth(y, m){
+  focusDate = new Date(y, m, 1, 12, 0, 0);
+  curView = 'month';
+  render();
+}
+
+function makeCell(ds, dayNum, otherMonth, events, checkins, books, tasks){
+  const div=document.createElement('div');
+  div.className='cal-day'+(otherMonth?' other-month':'')+(ds===todayStr()?' today':'')+(ds===selDate?' selected':'');
+
+  const dayEvents = getEventsForDate(ds, events);
+  const dayCI = checkins.filter(c=>c.timestamp&&c.timestamp.startsWith(ds)&&c.type!=='skipped');
+  const daySessions = books.flatMap(b=>(b.readingSessions||[]).filter(s=>s.date===ds));
+  const dayTasks = getTasksForDate(ds, tasks);
+
+  div.innerHTML=`<div class="day-num">${dayNum}</div><div class="ev-dots">
+    ${dayTasks.slice(0,3).map(t=>`<div class="ev-dot task${t.status==='done'?' done':''}" draggable="true" ondragstart="itemDragStart(event,'task','${t.id}')" ondragend="itemDragEnd(event)">📌 ${esc(t.title)}</div>`).join('')}
+    ${dayEvents.slice(0,3).map(e=>`<div class="ev-dot ${e.repeat&&e.repeat!=='none'?'repeat':'event'}" style="background:${evTint(evColor(e))};color:${evColor(e)}"${e._virtual?'':` draggable="true" ondragstart="itemDragStart(event,'event','${e.id}')" ondragend="itemDragEnd(event)"`}>${e.repeat&&e.repeat!=='none'?'🔁 ':''} ${esc(e.title)}${e.time?' ⏰'+e.time:''}</div>`).join('')}
+    ${daySessions.length?`<div class="ev-dot reading">${I18N[curLang]['dot.reading']||'📖'}</div>`:''}
+    ${dayCI.length?`<div class="ev-dot checkin">✓ ${dayCI.length}</div>`:''}
+  </div>`;
+  div.onclick=()=>selectDay(ds);
+  div.ondragover=allowDrop;
+  div.ondragenter=()=>{ if(dragItem) div.classList.add('drag-over'); };
+  div.ondragleave=(e)=>{ if(!div.contains(e.relatedTarget)) div.classList.remove('drag-over'); };
+  div.ondrop=(e)=>dropOnDay(e, ds);
+  return div;
+}
+
+function selectDay(ds){
+  selDate=ds;
+  render();
+  const events=getEvents();
+  const checkins=getCheckins();
+  const books=getBooks();
+  const dayTasks = getTasksForDate(ds, getTasks());
+  const dayEvents = getEventsForDate(ds, events);
+  const dayCI = checkins.filter(c=>c.timestamp&&c.timestamp.startsWith(ds));
+  const daySessions = books.flatMap(b=>(b.readingSessions||[]).filter(s=>s.date===ds).map(s=>({...s,bookTitle:b.title})));
+
+  const d=new Date(ds+'T12:00:00');
+  document.getElementById('sel-day-header').textContent = d.toLocaleDateString(curLang==='ar'?'ar':'en-US',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  let html='';
+
+  if(dayTasks.length){
+    const groups = getTaskGroups();
+    html+=`<div class="side-title">${t('side.tasks')}</div>`;
+    dayTasks.forEach(t2=>{
+      const g = groups.find(g=>g.id===t2.group);
+      html+=`<div class="ev-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="task-check${t2.status==='done'?' done':''}" onclick="toggleCalTaskDone('${t2.id}')">${t2.status==='done'?'✓':''}</div>
+            <div class="ev-card-title" style="cursor:pointer;${t2.status==='done'?'opacity:.5;text-decoration:line-through':''}" onclick="openEditTask('${t2.id}')">${esc(t2.title)}</div>
+          </div>
+          <button class="ev-card-del" onclick="deleteCalTask('${t2.id}')" title="${t('title.delete')}">🗑</button>
+        </div>
+        ${g?`<span class="badge badge-task">${esc(g.name)}</span>`:''}
+        ${t2.description?`<div class="ev-card-sub">${esc(t2.description)}</div>`:''}
+        ${t2.location?`<a class="ev-card-sub" href="${esc(t2.location)}" target="_blank" rel="noopener" style="display:block;color:var(--bt)">${t('link.open')}</a>`:''}
+      </div>`;
+    });
+  }
+
+  const done=dayCI.filter(c=>c.type==='task_completed');
+  const prog=dayCI.filter(c=>c.type==='task_progress');
+  const custom=dayCI.filter(c=>c.type==='custom_activity');
+  const reading=dayCI.filter(c=>c.type==='book_reading');
+  const skipped=dayCI.filter(c=>c.type==='skipped');
+
+  if(dayCI.length){
+    html+=`<div class="ci-stats">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px">${t('side.stats')}</div>
+      <div class="ci-row"><span>${t('stat.tasksDone')}</span><span class="ci-val">${done.length}</span></div>
+      <div class="ci-row"><span>${t('stat.progUpdates')}</span><span class="ci-val">${prog.length}</span></div>
+      <div class="ci-row"><span>${t('stat.readSessions')}</span><span class="ci-val">${reading.length}</span></div>
+      <div class="ci-row"><span>${t('stat.customActs')}</span><span class="ci-val">${custom.length}</span></div>
+      ${skipped.length?`<div class="ci-row"><span>${t('stat.skipped')}</span><span class="ci-val" style="opacity:.4">${skipped.length}</span></div>`:''}
+    </div>`;
+  }
+
+  if(dayCI.filter(c=>c.type!=='skipped').length){
+    html+=`<div class="side-title">${t('side.timeline')}</div>`;
+    dayCI.filter(c=>c.type!=='skipped').forEach(c=>{
+      const time=c.timestamp?new Date(c.timestamp).toLocaleTimeString(curLang==='ar'?'ar':'en-US',{hour:'2-digit',minute:'2-digit'}):'';
+      const label=ciLabel(c.type);
+      const sub=c.taskTitle||c.note||'';
+      html+=`<div class="ev-card">
+        <span class="badge badge-checkin">${label}</span>
+        <div class="ev-card-title">${esc(sub)}</div>
+        ${c.progress!=null?`<div class="ev-card-sub">${t('pct.label')}: ${c.progress}%</div>`:''}
+        <div class="ev-card-sub">${time}</div>
+      </div>`;
+    });
+  }
+
+  if(daySessions.length){
+    html+=`<div class="side-title" style="margin-top:12px">${t('side.readSessions')}</div>`;
+    daySessions.forEach(s=>{
+      const pages=(s.endPage||0)-(s.startPage||0);
+      html+=`<div class="ev-card">
+        <span class="badge badge-reading">${t('badge.reading')}</span>
+        <div class="ev-card-title">${esc(s.bookTitle)}</div>
+        <div class="ev-card-sub">${s.startPage||'؟'} → ${s.endPage||'؟'} (${pages>0?pages:0}) · ${s.durationMinutes||0} ${curLang==='ar'?'دقيقة':'min'}</div>
+      </div>`;
+    });
+  }
+
+  if(dayEvents.length){
+    html+=`<div class="side-title" style="margin-top:12px">${t('side.events')}</div>`;
+    dayEvents.forEach(e=>{
+      html+=`<div class="ev-card" style="border-inline-start:3px solid ${evColor(e)}">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+          <span style="font-size:11px;font-weight:600;opacity:.85"><span class="cal-color-cell" style="background:${evColor(e)}"></span>${esc(calById(e.calId).name)}${e.repeat&&e.repeat!=='none'?' · 🔁':''}</span>
+          ${!e._virtual?`<button class="ev-card-del" onclick="deleteEvent('${e.id}')" title="${t('title.delete')}">🗑</button>`:''}
+        </div>
+        <div class="ev-card-title"${!e._virtual?` style="cursor:pointer" onclick="openEditEvent('${e.id}')"`:''}>${esc(e.title)}</div>
+        ${e.time?`<div class="ev-card-sub">⏰ ${e.time}${e.endTime?' - '+e.endTime:''}</div>`:''}
+        ${e.repeat&&e.repeat!=='none'?`<div class="ev-card-sub">🔁 ${repeatLabel(e.repeat)}</div>`:''}
+        ${e.note?`<div class="ev-card-sub">${esc(e.note)}</div>`:''}
+        ${e.location?`<a class="ev-card-sub" href="${esc(e.location)}" target="_blank" rel="noopener" style="display:block;color:var(--bt)">${t('link.open')}</a>`:''}
+      </div>`;
+    });
+  }
+
+  if(!html) html=`<div class="no-items">${t('no.items')}</div>`;
+  document.getElementById('side-content').innerHTML=html;
+}
+
+function goToday(){ focusDate=new Date(); focusDate.setHours(12,0,0,0); selDate=todayStr(); render(); selectDay(todayStr()); }
+function prevPeriod(){
+  if(curView==='day') focusDate=addDays(focusDate,-1);
+  else if(curView==='week') focusDate=addDays(focusDate,-7);
+  else if(curView==='month') focusDate=new Date(focusDate.getFullYear(), focusDate.getMonth()-1, 1, 12);
+  else focusDate=new Date(focusDate.getFullYear()-1, focusDate.getMonth(), 1, 12);
+  render();
+}
+function nextPeriod(){
+  if(curView==='day') focusDate=addDays(focusDate,1);
+  else if(curView==='week') focusDate=addDays(focusDate,7);
+  else if(curView==='month') focusDate=new Date(focusDate.getFullYear(), focusDate.getMonth()+1, 1, 12);
+  else focusDate=new Date(focusDate.getFullYear()+1, focusDate.getMonth(), 1, 12);
+  render();
+}
+
+function toMin(hhmm){ const p=(hhmm||'0:0').split(':'); return (parseInt(p[0])||0)*60+(parseInt(p[1])||0); }
+function fromMin(m){ m=Math.max(0,Math.min(24*60-1,Math.round(m))); return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); }
+// توزيع الأحداث المتداخلة على أعمدة متجاورة — يضبط _col و_cols
+function layoutOverlaps(arr){
+  const sorted=[...arr].sort((a,b)=>a.sMin-b.sMin||a.eMin-b.eMin);
+  let cluster=[], cols=[], clusterEnd=-1;
+  const flush=()=>{ const n=cols.length||1; cluster.forEach(e=>e._cols=n); cluster=[]; cols=[]; clusterEnd=-1; };
+  sorted.forEach(e=>{
+    if(cluster.length && e.sMin>=clusterEnd) flush();
+    let placed=false;
+    for(let c=0;c<cols.length;c++){ if(cols[c]<=e.sMin){ cols[c]=e.eMin; e._col=c; placed=true; break; } }
+    if(!placed){ e._col=cols.length; cols.push(e.eMin); }
+    cluster.push(e); clusterEnd=Math.max(clusterEnd,e.eMin);
+  });
+  flush();
+}
+function onStartTimeChange(){
+  const st=document.getElementById('ev-time').value, et=document.getElementById('ev-endtime');
+  if(st && !et.value){ et.value = fromMin(toMin(st)+60); }
+  liveSaveEvent();
+}
+function openAddEvent(){
+  curEvId = null; evJustCreated = false;
+  document.getElementById('ev-title').value='';
+  document.getElementById('ev-date').value=selDate||todayStr();
+  document.getElementById('ev-time').value='';
+  document.getElementById('ev-endtime').value='';
+  document.getElementById('ev-note').value='';
+  document.getElementById('ev-repeat').value='none';
+  document.getElementById('ev-repeat-end').value='';
+  document.getElementById('ev-location').value='';
+  populateCalSelect('ev-cal', null);
+  document.getElementById('repeat-end-wrap').style.display='none';
+  document.getElementById('modal-overlay').classList.add('show');
+  setTimeout(()=>document.getElementById('ev-title').focus(),50);
+}
+function openEditEvent(id){
+  const ev = getEvents().find(e=>e.id===id);
+  if(!ev) return;
+  curEvId = id; evJustCreated = false;
+  document.getElementById('ev-title').value = ev.title||'';
+  document.getElementById('ev-date').value = ev.date||todayStr();
+  document.getElementById('ev-time').value = ev.time||'';
+  document.getElementById('ev-endtime').value = ev.endTime||'';
+  document.getElementById('ev-note').value = ev.note||'';
+  document.getElementById('ev-repeat').value = ev.repeat||'none';
+  document.getElementById('ev-repeat-end').value = ev.repeatEnd||'';
+  document.getElementById('ev-location').value = ev.location||'';
+  populateCalSelect('ev-cal', ev.calId);
+  document.getElementById('repeat-end-wrap').style.display = (ev.repeat&&ev.repeat!=='none') ? '' : 'none';
+  document.getElementById('modal-overlay').classList.add('show');
+}
+function closeModal(){ document.getElementById('modal-overlay').classList.remove('show'); }
+
+// ── التبديل بين نافذتَي حدث/مهمة مع نقل العنوان والتاريخ (نفس تقييم اليوم) ──
+function switchCalToTask(){
+  const title=document.getElementById('ev-title').value.trim();
+  const date=document.getElementById('ev-date').value||selDate||todayStr();
+  if(evJustCreated && curEvId){ deleteEvent(curEvId); } // احذف الحدث المسودة إن أُنشئ للتو
+  closeModal();
+  openAddTask();
+  document.getElementById('t-due').value = date;
+  if(title){ document.getElementById('t-title').value=title; liveSaveCalTask(); }
+  setTimeout(()=>document.getElementById('t-title').focus(),60);
+}
+function switchCalToEvent(){
+  const title=document.getElementById('t-title').value.trim();
+  const date=document.getElementById('t-due').value||selDate||todayStr();
+  if(taskJustCreated && curTaskId){ deleteCalTask(curTaskId); } // احذف المهمة المسودة إن أُنشئت للتو
+  closeTaskModal();
+  openAddEvent();
+  document.getElementById('ev-date').value = date;
+  if(title){ document.getElementById('ev-title').value=title; liveSaveEvent(); }
+  setTimeout(()=>document.getElementById('ev-title').focus(),60);
+}
+// حفظ فوري: أول حرف في العنوان ينشئ الحدث فوراً حتى لا يُفقد عند الانتقال لصفحة أخرى
+function liveSaveEvent(){
+  const title=document.getElementById('ev-title').value.trim();
+  const date=document.getElementById('ev-date').value;
+  if(!title||!date) return;
+  const fields = {
+    title, date,
+    time:document.getElementById('ev-time').value,
+    endTime:document.getElementById('ev-endtime').value||null,
+    note:document.getElementById('ev-note').value.trim(),
+    repeat:document.getElementById('ev-repeat').value,
+    repeatEnd:document.getElementById('ev-repeat-end').value||null,
+    location:document.getElementById('ev-location').value.trim(),
+    calId:document.getElementById('ev-cal').value
+  };
+  const events=getEvents();
+  if(curEvId){
+    const ev=events.find(e=>e.id===curEvId);
+    if(ev) Object.assign(ev, fields);
+  } else {
+    const ev={ id:'e'+Date.now(), ...fields, createdAt:new Date().toISOString() };
+    events.push(ev);
+    curEvId = ev.id; evJustCreated = true;
+  }
+  saveEvents(events); render();
+  if(selDate===date) selectDay(date);
+}
+function deleteEvent(id){
+  saveEvents(getEvents().filter(e=>e.id!==id));
+  render();
+  if(selDate) selectDay(selDate);
+}
+
+// ── استيراد التقويم من ملف iCalendar (.ics) — Google / Apple / Outlook ──
+function triggerICSImport(){ document.getElementById('ics-file-input').click(); }
+function handleICSFile(input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const res = importICSText(e.target.result);
+      if(res.addedEv===0 && res.addedTask===0 && res.skipped===0){
+        alert(t('import.empty'));
+      } else {
+        alert(t('import.done').replace('{ev}',res.addedEv).replace('{task}',res.addedTask).replace('{skip}',res.skipped));
+      }
+    }catch(err){ alert(t('import.error')+'\n'+(err&&err.message||err)); }
+    input.value='';
+  };
+  reader.readAsText(file);
+}
+function unescapeICS(v){ return (v||'').replace(/\\n/gi,'\n').replace(/\\,/g,',').replace(/\\;/g,';').replace(/\\\\/g,'\\'); }
+// يحوّل قيمة تاريخ ICS إلى {date:"YYYY-MM-DD", time:"HH:MM"} — يدعم اليوم الكامل و UTC (Z)
+function icsDateParts(val){
+  if(!val) return null;
+  const m = val.match(/(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})?(Z)?)?/);
+  if(!m) return null;
+  const Y=m[1], Mo=m[2], D=m[3], h=m[4], mi=m[5], s=m[6], z=m[7];
+  if(h==null) return { date:`${Y}-${Mo}-${D}`, time:'' }; // حدث ليوم كامل
+  if(z){ // وقت UTC → تحويل للوقت المحلي
+    const dt = new Date(Date.UTC(+Y, +Mo-1, +D, +h, +mi, +(s||0)));
+    return { date:dsFromDate(dt), time:`${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}` };
+  }
+  return { date:`${Y}-${Mo}-${D}`, time:`${h}:${mi}` };
+}
+function parseRRULE(rr){
+  if(!rr) return { repeat:'none', until:null };
+  const parts={}; rr.split(';').forEach(p=>{ const kv=p.split('='); if(kv[0]) parts[kv[0].toUpperCase()]=kv[1]; });
+  const map={DAILY:'daily', WEEKLY:'weekly', MONTHLY:'monthly', YEARLY:'yearly'};
+  const repeat = map[(parts.FREQ||'').toUpperCase()] || 'none';
+  let until=null;
+  if(parts.UNTIL){ const d=icsDateParts(parts.UNTIL); if(d) until=d.date; }
+  return { repeat, until };
+}
+function parseICS(text){
+  const raw = String(text).replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  const rawLines = raw.split('\n');
+  const lines=[]; // فكّ الأسطر المطويّة (سطر يبدأ بمسافة = تكملة السابق)
+  for(const ln of rawLines){
+    if((ln.startsWith(' ')||ln.startsWith('\t')) && lines.length) lines[lines.length-1]+=ln.slice(1);
+    else lines.push(ln);
+  }
+  const items=[]; let cur=null;
+  for(let ln of lines){
+    ln = ln.replace(/\s+$/,'');
+    if(ln==='BEGIN:VEVENT'){ cur={type:'VEVENT'}; continue; }
+    if(ln==='BEGIN:VTODO'){ cur={type:'VTODO'}; continue; }
+    if(ln==='END:VEVENT'||ln==='END:VTODO'){ if(cur) items.push(cur); cur=null; continue; }
+    if(!cur) continue;
+    const ci=ln.indexOf(':'); if(ci<0) continue;
+    const name=ln.slice(0,ci).split(';')[0].toUpperCase();
+    const val=ln.slice(ci+1);
+    if(name==='SUMMARY') cur.SUMMARY=unescapeICS(val);
+    else if(name==='DESCRIPTION') cur.DESCRIPTION=unescapeICS(val);
+    else if(name==='LOCATION') cur.LOCATION=unescapeICS(val);
+    else if(name==='CATEGORIES') cur.CATEGORIES=unescapeICS(val);
+    else if(name==='UID') cur.UID=val;
+    else if(name==='RRULE') cur.RRULE=val;
+    else if(name==='STATUS') cur.STATUS=val;
+    else if(name==='DTSTART') cur.start=icsDateParts(val);
+    else if(name==='DTEND') cur.end=icsDateParts(val);
+    else if(name==='DUE') cur.due=icsDateParts(val);
+  }
+  return items;
+}
+function importICSText(text){
+  const items = parseICS(text);
+  const events = getEvents();
+  const tasks = getTasks();
+  const existEvUid = new Set(events.map(e=>e._uid).filter(Boolean));
+  const existTaskUid = new Set(tasks.map(t=>t._uid).filter(Boolean));
+  let addedEv=0, addedTask=0, skipped=0;
+  const uniq = () => Date.now()+'-'+Math.random().toString(36).slice(2,7);
+  items.forEach(it=>{
+    if(it.type==='VEVENT'){
+      if(!it.SUMMARY || !it.start) return;
+      const uid = it.UID || ('ics-'+it.SUMMARY+'-'+it.start.date+'-'+(it.start.time||''));
+      if(existEvUid.has(uid)){ skipped++; return; }
+      const rr = parseRRULE(it.RRULE);
+      events.push({
+        id:'e'+uniq(), title:it.SUMMARY, date:it.start.date, time:it.start.time||'',
+        endTime:(it.end && it.end.time)?it.end.time:null, note:it.DESCRIPTION||'',
+        repeat:rr.repeat, repeatEnd:rr.until, location:it.LOCATION||'',
+        calId:findOrCreateCalByName(it.CATEGORIES),
+        createdAt:new Date().toISOString(), _uid:uid, _imported:true
+      });
+      existEvUid.add(uid); addedEv++;
+    } else if(it.type==='VTODO'){
+      if(!it.SUMMARY) return;
+      const uid = it.UID || ('ics-todo-'+it.SUMMARY+'-'+(it.due?it.due.date:''));
+      if(existTaskUid.has(uid)){ skipped++; return; }
+      let status='todo'; const st=(it.STATUS||'').toUpperCase();
+      if(st==='COMPLETED') status='done'; else if(st==='IN-PROCESS') status='in_progress';
+      tasks.push({
+        id:'t'+uniq(), title:it.SUMMARY, description:it.DESCRIPTION||'', group:'',
+        dueDate:it.due?it.due.date:todayStr(), status, location:it.LOCATION||'',
+        progress:status==='done'?100:0, createdAt:new Date().toISOString(),
+        completedAt:status==='done'?new Date().toISOString():null, deleted:false,
+        _uid:uid, _imported:true
+      });
+      existTaskUid.add(uid); addedTask++;
+    }
+  });
+  if(addedEv) saveEvents(events);
+  if(addedTask) saveTasksData(tasks);
+  render();
+  if(selDate) selectDay(selDate);
+  return { addedEv, addedTask, skipped };
+}
+
+// ── تقاويم متعددة (أنواع بألوان) ──
+const CAL_PALETTE = ['#2563eb','#16a34a','#ea580c','#7c3aed','#dc2626','#0891b2','#db2777','#ca8a04'];
+function getCals(){
+  let c;
+  try{ c = JSON.parse(localStorage.getItem(KEY_CALS)||'null'); }catch(e){ c=null; }
+  if(!Array.isArray(c) || !c.length){
+    c = [{ id:'default', name:(curLang==='ar'?'عام':'General'), color:'#2563eb', hidden:false }];
+    localStorage.setItem(KEY_CALS, JSON.stringify(c));
+  }
+  return c;
+}
+function saveCals(c){ localStorage.setItem(KEY_CALS, JSON.stringify(c)); }
+function calById(id){ const c=getCals(); return c.find(x=>x.id===id) || c[0]; }
+// يجد تقويمًا بالاسم أو ينشئ واحدًا جديدًا (يُستخدم عند الاستيراد من CATEGORIES)
+function findOrCreateCalByName(name){
+  const cals=getCals();
+  if(!name) return cals[0].id;
+  const found=cals.find(c=>c.name.trim().toLowerCase()===name.trim().toLowerCase());
+  if(found) return found.id;
+  const used=cals.map(c=>c.color);
+  const color=CAL_PALETTE.find(p=>!used.includes(p)) || CAL_PALETTE[cals.length % CAL_PALETTE.length];
+  const id='c'+Date.now()+'-'+Math.random().toString(36).slice(2,6);
+  cals.push({ id, name:name.trim(), color, hidden:false });
+  saveCals(cals);
+  return id;
+}
+function isCalHidden(id){ const c=getCals(); const cal=c.find(x=>x.id===id); return cal ? !!cal.hidden : false; }
+function evColor(ev){ const cal=calById(ev && ev.calId); return (cal && cal.color) || '#2563eb'; }
+// خلفية شفافة مشتقة من لون التقويم (يدعم #RRGGBB فقط، وإلا يرجّع اللون كما هو)
+function evTint(hex){ return /^#[0-9a-fA-F]{6}$/.test(hex) ? hex+'22' : hex; }
+function populateCalSelect(selId, val){
+  const sel=document.getElementById(selId); if(!sel) return;
+  const cals=getCals();
+  sel.innerHTML = cals.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  sel.value = (val && cals.some(c=>c.id===val)) ? val : cals[0].id;
+}
+
+// ── قائمة الإعدادات المنسدلة ──
+function toggleSettingsMenu(e){ if(e) e.stopPropagation(); document.getElementById('settings-menu').classList.toggle('show'); }
+function closeSettingsMenu(){ document.getElementById('settings-menu').classList.remove('show'); }
+// ── مبدّل العرض المنسدل (يوم/أسبوع/شهر/سنة) ──
+function toggleViewMenu(e){ if(e) e.stopPropagation(); document.getElementById('view-menu').classList.toggle('show'); }
+function closeViewMenu(){ document.getElementById('view-menu').classList.remove('show'); }
+function pickView(v){ closeViewMenu(); setView(v); }
+document.addEventListener('click', (e)=>{
+  if(!e.target.closest('.settings-wrap')) closeSettingsMenu();
+  if(!e.target.closest('.view-switcher')) closeViewMenu();
+});
+
+// ── فلاتر التقاويم في الشريط الجانبي ──
+function renderCalFilters(){
+  const box=document.getElementById('cal-filters'); if(!box) return;
+  const cals=getCals();
+  box.innerHTML = `<div class="side-title">${curLang==='ar'?'التقاويم':'Calendars'}</div>` + cals.map(c=>`
+    <label class="cal-filter-item">
+      <input type="checkbox" ${c.hidden?'':'checked'} onchange="toggleCalHidden('${c.id}')">
+      <span class="cal-color-cell" style="background:${c.color}"></span>${esc(c.name)}
+    </label>`).join('');
+}
+function refreshCalUI(){ renderCalList(); renderCalFilters(); render(); if(selDate) selectDay(selDate); }
+
+// ── السحب والإفلات للأحداث والمهام ──
+let dragItem = null; // { kind:'event'|'task', id }
+function itemDragStart(e, kind, id){
+  dragItem = { kind, id };
+  if(e.dataTransfer){ e.dataTransfer.effectAllowed='move'; try{ e.dataTransfer.setData('text/plain', id); }catch(_){} }
+  if(e.target && e.target.classList) e.target.classList.add('dragging');
+}
+function itemDragEnd(e){
+  if(e && e.target && e.target.classList) e.target.classList.remove('dragging');
+  document.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));
+  dragItem = null;
+}
+function allowDrop(e){ if(dragItem){ e.preventDefault(); if(e.dataTransfer) e.dataTransfer.dropEffect='move'; } }
+function afterDrop(){
+  document.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));
+  dragItem = null;
+  render(); if(selDate) selectDay(selDate);
+}
+// إفلات على يوم (شهر): تغيير التاريخ مع الإبقاء على الوقت
+function dropOnDay(e, ds){
+  if(e) e.preventDefault();
+  if(!dragItem){ afterDrop(); return; }
+  if(dragItem.kind==='event'){ const evs=getEvents(); const ev=evs.find(x=>x.id===dragItem.id); if(ev){ ev.date=ds; saveEvents(evs); } }
+  else { const ts=getTasks(); const tk=ts.find(x=>x.id===dragItem.id); if(tk){ tk.dueDate=ds; saveTasksData(ts); } }
+  afterDrop();
+}
+// إفلات على صف "بلا وقت" (أسبوع/يوم): تغيير التاريخ وجعل الحدث بلا وقت
+function dropUntimed(e, ds){
+  if(e) e.preventDefault();
+  if(!dragItem){ afterDrop(); return; }
+  if(dragItem.kind==='event'){ const evs=getEvents(); const ev=evs.find(x=>x.id===dragItem.id); if(ev){ ev.date=ds; ev.time=''; ev.endTime=null; saveEvents(evs); } }
+  else { const ts=getTasks(); const tk=ts.find(x=>x.id===dragItem.id); if(tk){ tk.dueDate=ds; saveTasksData(ts); } }
+  afterDrop();
+}
+// إفلات على عمود المدرج الزمني: تغيير التاريخ والوقت (مع الإبقاء على المدّة)
+function dropTimeline(e, ds, startH){
+  if(e) e.preventDefault();
+  if(!dragItem){ afterDrop(); return; }
+  if(dragItem.kind==='task'){ const ts=getTasks(); const tk=ts.find(x=>x.id===dragItem.id); if(tk){ tk.dueDate=ds; saveTasksData(ts); } afterDrop(); return; }
+  const evs=getEvents(); const ev=evs.find(x=>x.id===dragItem.id);
+  if(!ev){ afterDrop(); return; }
+  const rect=e.currentTarget.getBoundingClientRect();
+  const mins=pixelsToMinutes(e.clientY - rect.top);
+  const newStart=startH*60+mins;
+  const dur=(ev.time && ev.endTime) ? Math.max(15, toMin(ev.endTime)-toMin(ev.time)) : 60;
+  ev.date=ds; ev.time=minutesToTimeStr(newStart); ev.endTime=minutesToTimeStr(newStart+dur);
+  saveEvents(evs);
+  afterDrop();
+}
+
+// ── سحب/تعديل أحداث المدرج الزمني بالمؤشر (نفس تجربة تقييم اليوم) ──
+function updateEventTimingCal(evid, ds, startMin, endMin){
+  const events=getEvents();
+  const ev=events.find(e=>e.id===evid);
+  if(!ev) return;
+  if(ds) ev.date=ds;
+  ev.time=minutesToTimeStr(Math.max(0,startMin));
+  ev.endTime=minutesToTimeStr(Math.max(startMin+15,endMin));
+  saveEvents(events); render(); if(selDate) selectDay(selDate);
+}
+function attachTimelineEventDrag(colsEl, dates, startH){
+  colsEl.querySelectorAll('.dw-event.draggable').forEach(ev=>{
+    const evid = ev.getAttribute('data-evid');
+    const resizeH = ev.querySelector('.dw-resize');
+
+    // تغيير المدة (السحب من الأسفل)
+    if(resizeH){
+      resizeH.addEventListener('pointerdown', e=>{
+        e.preventDefault(); e.stopPropagation();
+        const startY=e.clientY, origH=ev.offsetHeight;
+        resizeH.setPointerCapture(e.pointerId);
+        const onMove=me=>{ ev.style.height=Math.max(20, origH+(me.clientY-startY))+'px'; };
+        const onUp=()=>{
+          resizeH.removeEventListener('pointermove', onMove);
+          resizeH.removeEventListener('pointerup', onUp);
+          const topMin=startH*60 + Math.round((ev.offsetTop/ROW_H)*60);
+          let durMin=Math.round((ev.offsetHeight/ROW_H)*60/15)*15; if(durMin<15) durMin=15;
+          updateEventTimingCal(evid, null, topMin, topMin+durMin);
+        };
+        resizeH.addEventListener('pointermove', onMove);
+        resizeH.addEventListener('pointerup', onUp);
+      });
+    }
+
+    // نقل الحدث (السحب من الجسم) — عموديًا يغيّر الوقت، وأفقيًا يتبع المؤشر بين أعمدة الأيام لحظيًا
+    // ملاحظة: نستمع على document بدل setPointerCapture لأن نقل العنصر في الـDOM يُفقد الـcapture
+    // (فكان ينتقل يومًا واحدًا ثم يعلق عند السحب عبر أكثر من يوم).
+    ev.addEventListener('pointerdown', e=>{
+      if(e.target.classList.contains('dw-resize')) return;
+      e.preventDefault();
+      const startX=e.clientX, startY=e.clientY, origTop=ev.offsetTop, evH=ev.offsetHeight;
+      let gridH=ev.parentElement.offsetHeight;
+      let moved=false;
+      const cols=[].slice.call(colsEl.querySelectorAll('.dw-col'));
+      const onMove=me=>{
+        const dx=me.clientX-startX, dy=me.clientY-startY;
+        if(!moved && (Math.abs(dx)>4 || Math.abs(dy)>4)){
+          moved=true; ev.classList.add('dragging');
+          // أثناء السحب: امدد الحدث لكامل عرض العمود (تجاهل توزيع التداخل مؤقتًا)
+          ev.style.left='2px'; ev.style.right='2px'; ev.style.width='auto';
+        }
+        if(moved){
+          // اتبع العمود (اليوم) الموجود تحت المؤشر أفقيًا بنقل الحدث إليه مباشرةً (قفزة واحدة مهما بعُد)
+          for(let i=0;i<cols.length;i++){
+            const r=cols[i].getBoundingClientRect();
+            if(me.clientX>=r.left && me.clientX<=r.right){
+              if(cols[i]!==ev.parentElement){ cols[i].appendChild(ev); gridH=cols[i].offsetHeight; }
+              break;
+            }
+          }
+          let nt=Math.max(0, Math.min(gridH-evH, origTop+dy));
+          ev.style.top=nt+'px';
+        }
+      };
+      const onUp=()=>{
+        document.removeEventListener('pointermove', onMove);
+        document.removeEventListener('pointerup', onUp);
+        ev.classList.remove('dragging');
+        if(moved){
+          const durMin=Math.round((evH/ROW_H)*60);
+          let topMin=startH*60 + Math.round((ev.offsetTop/ROW_H)*60/15)*15; if(topMin<0) topMin=0;
+          // اليوم = العمود الذي انتهى الحدث بداخله
+          const idx=parseInt(ev.parentElement.getAttribute('data-idx'));
+          const ds=isNaN(idx)?null:dsFromDate(dates[idx]);
+          updateEventTimingCal(evid, ds, topMin, topMin+durMin);
+        } else {
+          openEditEvent(evid); // نقرة بسيطة = تعديل
+        }
+      };
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+    });
+  });
+}
+
+// ── نافذة إدارة التقاويم ──
+function openCalManager(){ renderCalList(); document.getElementById('cal-modal-overlay').classList.add('show'); }
+function closeCalManager(){ document.getElementById('cal-modal-overlay').classList.remove('show'); populateCalSelect('ev-cal', document.getElementById('ev-cal').value); render(); if(selDate) selectDay(selDate); }
+function renderCalList(){
+  const cals=getCals();
+  document.getElementById('cal-list').innerHTML = cals.map(c=>`
+    <div class="cal-item">
+      <input type="color" class="cal-swatch" value="${c.color}" onchange="updateCalColor('${c.id}', this.value)">
+      <input class="cal-name-in" value="${esc(c.name)}" onchange="updateCalName('${c.id}', this.value)">
+      <button class="cal-eye" title="إظهار/إخفاء" onclick="toggleCalHidden('${c.id}')">${c.hidden?'🙈':'👁️'}</button>
+      <button class="cal-del" title="حذف" onclick="removeCalendar('${c.id}')">🗑</button>
+    </div>`).join('');
+}
+function addCalendar(){
+  const cals=getCals();
+  const used=cals.map(c=>c.color);
+  const color=CAL_PALETTE.find(p=>!used.includes(p)) || CAL_PALETTE[cals.length % CAL_PALETTE.length];
+  cals.push({ id:'c'+Date.now()+'-'+Math.random().toString(36).slice(2,6), name:t('cal.newName'), color, hidden:false });
+  saveCals(cals); refreshCalUI();
+}
+function updateCalColor(id, val){ const cals=getCals(); const c=cals.find(x=>x.id===id); if(c){ c.color=val; saveCals(cals); refreshCalUI(); } }
+function updateCalName(id, val){ const cals=getCals(); const c=cals.find(x=>x.id===id); if(c){ c.name=val.trim()||c.name; saveCals(cals); refreshCalUI(); } }
+function toggleCalHidden(id){ const cals=getCals(); const c=cals.find(x=>x.id===id); if(c){ c.hidden=!c.hidden; saveCals(cals); refreshCalUI(); } }
+function removeCalendar(id){
+  let cals=getCals();
+  if(cals.length<=1){ alert(t('cal.lastOne')); return; }
+  if(!confirm(t('cal.confirmDelete'))) return;
+  cals=cals.filter(c=>c.id!==id);
+  saveCals(cals);
+  // نقل أحداث التقويم المحذوف إلى التقويم الأول
+  const fallback=cals[0].id;
+  const events=getEvents(); let changed=false;
+  events.forEach(ev=>{ if(ev.calId===id){ ev.calId=fallback; changed=true; } });
+  if(changed) saveEvents(events);
+  refreshCalUI();
+}
+
+// ── تصدير إلى ملف iCalendar (.ics) ──
+function icsEscape(s){ return String(s||'').replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;'); }
+function icsStamp(dateStr, timeStr){
+  const d=(dateStr||'').replace(/-/g,'');
+  if(!timeStr) return { prop:';VALUE=DATE:'+d };
+  return { prop:':'+d+'T'+timeStr.replace(':','')+'00' };
+}
+function icsRRule(repeat, until){
+  const map={daily:'DAILY', weekly:'WEEKLY', monthly:'MONTHLY', yearly:'YEARLY'};
+  if(!repeat || !map[repeat]) return null;
+  let r='FREQ='+map[repeat];
+  if(until) r+=';UNTIL='+until.replace(/-/g,'')+'T000000Z';
+  return r;
+}
+function exportICS(){
+  const events=getEvents(), tasks=getTasks().filter(t=>!t.deleted);
+  if(!events.length && !tasks.length){ alert(t('export.empty')); return; }
+  const nowStamp = new Date().toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';
+  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//MyApp//Calendar//AR','CALSCALE:GREGORIAN'];
+  events.forEach(ev=>{
+    const cal=calById(ev.calId);
+    L.push('BEGIN:VEVENT');
+    L.push('UID:'+(ev._uid || ev.id+'@myapp'));
+    L.push('DTSTAMP:'+nowStamp);
+    L.push('DTSTART'+icsStamp(ev.date, ev.time).prop);
+    if(ev.endTime && ev.time) L.push('DTEND'+icsStamp(ev.date, ev.endTime).prop);
+    L.push('SUMMARY:'+icsEscape(ev.title));
+    if(cal) L.push('CATEGORIES:'+icsEscape(cal.name));
+    if(ev.note) L.push('DESCRIPTION:'+icsEscape(ev.note));
+    if(ev.location) L.push('LOCATION:'+icsEscape(ev.location));
+    const rr=icsRRule(ev.repeat, ev.repeatEnd); if(rr) L.push('RRULE:'+rr);
+    L.push('END:VEVENT');
+  });
+  tasks.forEach(tk=>{
+    L.push('BEGIN:VTODO');
+    L.push('UID:'+(tk._uid || tk.id+'@myapp'));
+    L.push('DTSTAMP:'+nowStamp);
+    if(tk.dueDate) L.push('DUE'+icsStamp(tk.dueDate, '').prop);
+    L.push('SUMMARY:'+icsEscape(tk.title));
+    if(tk.description) L.push('DESCRIPTION:'+icsEscape(tk.description));
+    L.push('STATUS:'+(tk.status==='done'?'COMPLETED':tk.status==='in_progress'?'IN-PROCESS':'NEEDS-ACTION'));
+    L.push('END:VTODO');
+  });
+  L.push('END:VCALENDAR');
+  const blob=new Blob([L.join('\r\n')], {type:'text/calendar;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='calendar-'+todayStr()+'.ics';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+// ── ربط المهام بالتقويم ──
+function closeTaskModal(){ document.getElementById('task-modal-overlay').classList.remove('show'); }
+function populateTaskGroupSelect(val){
+  const s=document.getElementById('t-group');
+  const groups=getTaskGroups();
+  s.innerHTML='<option value="">— بلا مجموعة —</option>';
+  groups.forEach(g=>{ const o=document.createElement('option'); o.value=g.id; o.textContent=g.name; if(g.id===val) o.selected=true; s.appendChild(o); });
+}
+function openAddTask(){
+  curTaskId = null; taskJustCreated = false;
+  document.getElementById('task-modal-title').textContent = t('modal.newTask');
+  document.getElementById('t-title').value='';
+  document.getElementById('t-desc').value='';
+  document.getElementById('t-due').value = selDate||todayStr();
+  document.getElementById('t-status').value='todo';
+  document.getElementById('t-location').value='';
+  document.getElementById('task-delete-btn').style.display='none';
+  populateTaskGroupSelect('');
+  document.getElementById('task-modal-overlay').classList.add('show');
+  setTimeout(()=>document.getElementById('t-title').focus(),50);
+}
+function openEditTask(id){
+  const tk = getTasks().find(t=>t.id===id);
+  if(!tk) return;
+  curTaskId = id; taskJustCreated = false;
+  document.getElementById('task-modal-title').textContent = t('modal.editTask');
+  document.getElementById('t-title').value = tk.title||'';
+  document.getElementById('t-desc').value = tk.description||'';
+  document.getElementById('t-due').value = tk.dueDate||todayStr();
+  document.getElementById('t-status').value = tk.status||'todo';
+  document.getElementById('t-location').value = tk.location||'';
+  document.getElementById('task-delete-btn').style.display='';
+  populateTaskGroupSelect(tk.group||'');
+  document.getElementById('task-modal-overlay').classList.add('show');
+}
+// حفظ فوري: أول حرف في العنوان ينشئ المهمة فوراً في kanban-tasks (نفس المهام التي تظهر في صفحة "المهام")
+function liveSaveCalTask(){
+  const title=document.getElementById('t-title').value.trim();
+  if(!title) return;
+  const fields = {
+    title,
+    description:document.getElementById('t-desc').value.trim(),
+    group:document.getElementById('t-group').value,
+    dueDate:document.getElementById('t-due').value||todayStr(),
+    status:document.getElementById('t-status').value,
+    location:document.getElementById('t-location').value.trim()
+  };
+  const tasks=getTasks();
+  if(curTaskId){
+    const t=tasks.find(t=>t.id===curTaskId);
+    if(t){ Object.assign(t, fields); if(fields.status==='done'){ t.progress=100; if(!t.completedAt) t.completedAt=new Date().toISOString(); } }
+  } else {
+    const t={ id:'t'+Date.now(), ...fields, progress: fields.status==='done'?100:0, createdAt:new Date().toISOString(), completedAt:fields.status==='done'?new Date().toISOString():null, deleted:false };
+    tasks.push(t);
+    curTaskId = t.id; taskJustCreated = true;
+    document.getElementById('task-delete-btn').style.display='';
+  }
+  saveTasksData(tasks);
+  render();
+  if(selDate===fields.dueDate) selectDay(fields.dueDate);
+}
+function toggleCalTaskDone(id){
+  const tasks=getTasks();
+  const t=tasks.find(t=>t.id===id);
+  if(!t) return;
+  if(t.status==='done'){ t.status='todo'; t.progress=0; }
+  else { t.status='done'; t.progress=100; if(!t.completedAt) t.completedAt=new Date().toISOString(); }
+  saveTasksData(tasks); render();
+  if(selDate) selectDay(selDate);
+}
+function deleteCalTask(id){
+  const tasks=getTasks();
+  const t=tasks.find(t=>t.id===id);
+  if(t) t.deleted=true;
+  saveTasksData(tasks); render();
+  if(selDate) selectDay(selDate);
+}
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeModal(); closeTaskModal(); } });
+
+applyLang(curLang);
+goToday();
+</script>
+<script>
+/* إغلاق النافذة المنبثقة بالضغط خارجها (على الخلفية) بدل زر ✕ */
+(function(){
+  function bind(ov){
+    var down=false;
+    ov.addEventListener('pointerdown',function(e){ down=(e.target===ov); });
+    ov.addEventListener('click',function(e){
+      if(e.target===ov && down){
+        var btn=ov.querySelector('.modal-close, .ch-close');
+        if(btn){ btn.click(); } else { ov.classList.remove('show'); }
+      }
+    });
+  }
+  document.querySelectorAll('.overlay, #checkin-overlay').forEach(bind);
+})();
+</script>
+<script>
+/* أمسك واسحب للتمرير في كل الاتجاهات (بالماوس) — drag-to-scroll */
+(function(){
+  var down=false, moved=false, sx=0, sy=0, elX=null, elY=null, baseL=0, baseT=0;
+  var NODRAG='a,button,input,textarea,select,label,option,[contenteditable="true"],[draggable="true"],.no-drag';
+  function scrollable(el, axis){
+    while(el && el.nodeType===1 && el!==document.body && el!==document.documentElement){
+      var s=getComputedStyle(el), o=(axis==='y'?s.overflowY:s.overflowX);
+      var can=(o==='auto'||o==='scroll'||o==='overlay');
+      var big=(axis==='y'? el.scrollHeight>el.clientHeight+1 : el.scrollWidth>el.clientWidth+1);
+      if(can && big) return el;
+      el=el.parentElement;
+    }
+    return axis==='y' ? (document.scrollingElement||document.documentElement) : null;
+  }
+  addEventListener('pointerdown',function(e){
+    if(e.pointerType && e.pointerType!=='mouse') return;   /* اللمس يمرّر بشكل طبيعي */
+    if(e.button!==0) return;
+    if(e.target.closest && e.target.closest(NODRAG)) return;
+    if(getComputedStyle(e.target).cursor==='text') return;
+    down=true; moved=false; sx=e.clientX; sy=e.clientY;
+    elY=scrollable(e.target,'y'); elX=scrollable(e.target,'x');
+    baseT=elY?elY.scrollTop:0; baseL=elX?elX.scrollLeft:0;
+  },true);
+  addEventListener('pointermove',function(e){
+    if(!down) return;
+    var dx=e.clientX-sx, dy=e.clientY-sy;
+    if(!moved){
+      if(Math.abs(dx)<5 && Math.abs(dy)<5) return;
+      moved=true;
+      document.body.style.cursor='grabbing';
+      document.body.style.userSelect='none';
+    }
+    if(e.cancelable) e.preventDefault();
+    if(elY) elY.scrollTop=baseT-dy;
+    if(elX) elX.scrollLeft=baseL-dx;
+  },{passive:false,capture:true});
+  function end(){
+    if(!down) return;
+    down=false;
+    document.body.style.cursor='';
+    document.body.style.userSelect='';
+    if(moved){                       /* امنع النقرة الناتجة عن السحب */
+      var sup=function(ev){ ev.stopPropagation(); ev.preventDefault(); removeEventListener('click',sup,true); };
+      addEventListener('click',sup,true);
+      setTimeout(function(){ removeEventListener('click',sup,true); },0);
+    }
+  }
+  addEventListener('pointerup',end,true);
+  addEventListener('pointercancel',end,true);
+})();
+</script>
+<script>
+/* حجم الخط الموحّد (font-scale) — يُطبّق إعداد "حجم الخط" من الإعدادات على كل الصفحات.
+   الصفحة العليا فقط تُطبّق zoom؛ الصفحة داخل iframe يُصغّرها تكبير القوقعة تلقائياً. */
+(function(){
+  var M={small:0.85, normal:1, large:1.15};
+  function cur(){ var v=localStorage.getItem('font-scale'); return M[v]?v:'normal'; }
+  function apply(){
+    if(window.top!==window.self) return;            /* مؤطّرة: القوقعة تتكفّل بالتصغير */
+    var s=M[cur()]||1, de=document.documentElement;
+    de.style.zoom=s;
+    /* تعويض الارتفاع حتى لا يظهر فراغ أسفل الشاشة (zoom يتعارض مع 100vh) */
+    de.style.height = s===1 ? '' : (100/s)+'vh';
+    if(document.body) document.body.style.minHeight = s===1 ? '' : (100/s)+'vh';
+  }
+  if(document.body) apply(); else document.addEventListener('DOMContentLoaded',apply);
+  window.addEventListener('storage', function(e){ if(e.key==='font-scale') apply(); });
+})();
+</script>
+</body>
+</html>
